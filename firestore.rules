@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- 1. App Configuration (Read-only for everyone) ----
+    match /appMeta/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ---- 2. Marine Sightings (Public Map) ----
+    // Anyone can read (for the map).
+    // Only authenticated users can create.
+    match /marineSightings/{sightingId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      // Optional: Allow users to edit/delete their own sightings
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // ---- 3. User Profiles ----
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ---- 4. Dive Logs (Future Proofing) ----
+    // Currently logs are local, but if synced later:
+    match /diveLogs/{logId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // ---- 5. Default Fallback ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

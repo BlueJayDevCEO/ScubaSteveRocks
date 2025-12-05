@@ -1,0 +1,8 @@
+{
+  "name": "ScubaSteve",
+  "description": "Your ultimate AI-powered diving assistant. Features include free chat, marine life identification, underwater photo color correction, a suite of professional dive calculators, and a searchable dive log with community-verified sightings.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}

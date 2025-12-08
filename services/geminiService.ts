@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Chat, Modality, GenerateContentResponse, Part } from "@google/genai";
 import { IdentificationResult, ChatMessage, DiveSiteBriefingResult, GroundingChunk, LiveReportResult, DiveTripPlanResult, Briefing, User, ScubaNewsArticle, GameRound } from '../types';
 import i18n from './i18n';
@@ -6,17 +5,14 @@ import { QUIZ_DATA } from '../data/quizData';
 
 // This is the main AI instance. In a production app, you would not expose
 // the API key on the client side.
-const ai = 
-// ---- FIXED API KEY INJECTION ----
-const apiKey = import.meta.env.VITE_GOOGLE_GENAI;
-if (!apiKey) { throw new Error("Missing VITE_GOOGLE_GENAI"); }
-const ai = new GoogleGenAI({ apiKey });
-
+const ai = new GoogleGenAI({
+  apiKey: "AIzaSyAP4uP-csHm5lVufGWAscK0lMgRgnQHJiw",
+});
 
 const identificationModel = 'gemini-2.5-flash'; // Switched to the faster model to reduce timeouts
 const fastModel = 'gemini-2.5-flash';
-// COST PROTECTION: Switched Trip Planner from Pro to Flash to reduce costs by ~95%
-const proModel = 'gemini-2.5-flash'; 
+const proModel = 'gemini-2.5-flash';
+ 
 
 // Helper function for retrying API calls with exponential backoff
 async function callGenAIWithRetry<T>(
@@ -928,3 +924,5 @@ export async function decodeAudioData(
 }
 
 if (!import.meta.env.VITE_GOOGLE_GENAI) { throw new Error('Missing VITE_GOOGLE_GENAI'); }
+
+// TEMP: Hardcoded API key used for testing deployment

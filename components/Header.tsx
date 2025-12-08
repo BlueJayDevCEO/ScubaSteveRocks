@@ -11,6 +11,7 @@ interface HeaderProps {
     onGoHome: () => void;
     remainingBriefings: number;
     onOpenGameInfo: () => void;
+    onOpenCredits: () => void;
 }
 
 // Helper to safely validate image URLs
@@ -20,7 +21,7 @@ const isValidUrl = (url: string | undefined | null): boolean => {
     return url.startsWith('http') || url.startsWith('data:');
 };
 
-export const Header: React.FC<HeaderProps> = ({ onLogout, onOpenProfile, onGoHome, remainingBriefings, onOpenGameInfo }) => {
+export const Header: React.FC<HeaderProps> = ({ onLogout, onOpenProfile, onGoHome, remainingBriefings, onOpenGameInfo, onOpenCredits }) => {
     const context = useContext(AppContext);
     const { t } = useTranslation(); 
     if (!context) return null;
@@ -45,8 +46,11 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onOpenProfile, onGoHom
             <div className="glass-panel rounded-2xl shadow-lg border border-white/20 w-full flex items-center justify-between py-3 px-4 backdrop-blur-xl bg-white/80 dark:bg-black/70 transition-all duration-300">
                 <div className="flex-shrink-0 flex items-center gap-3">
                     <button onClick={onGoHome} title="Go to Home" className="flex items-center gap-3 group">
-                        {/* Always show Scuba Steve Mascot here, forced via Component */}
-                        <ScubaSteveLogo className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shadow-lg border border-white/20 bg-white/10 backdrop-blur-sm group-hover:scale-105 transition-transform" />
+                        {/* Always show Scuba Steve Mascot here, forced via Component, now using config URL */}
+                        <ScubaSteveLogo 
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shadow-lg border border-white/20 bg-white/10 backdrop-blur-sm group-hover:scale-105 transition-transform" 
+                            src={config?.avatarUrl}
+                        />
                         
                         <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-gradient-primary hidden sm:block group-hover:scale-105 transition-transform drop-shadow-md tracking-tight">
                             Scuba Steve AI™
@@ -56,16 +60,20 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onOpenProfile, onGoHom
 
                 {user && (
                     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-                        {/* Premium Credits - Mobile Compact / Desktop Full */}
+                        {/* Premium Credits - Clickable Button */}
                         <div className="flex items-center">
-                            <span className="relative bg-black/5 dark:bg-white/10 backdrop-blur-md text-xs sm:text-sm font-bold pl-6 pr-3 py-1.5 rounded-full border border-black/5 dark:border-white/10 shadow-sm text-light-text dark:text-dark-text transition-all hover:bg-black/10 dark:hover:bg-white/20 cursor-default" title="Premium Credits for Search, Voice & Planning. Chat & ID are free!">
+                            <button 
+                                onClick={onOpenCredits}
+                                className="relative bg-black/5 dark:bg-white/10 backdrop-blur-md text-xs sm:text-sm font-bold pl-6 pr-3 py-1.5 rounded-full border border-black/5 dark:border-white/10 shadow-sm text-light-text dark:text-dark-text transition-all hover:bg-black/10 dark:hover:bg-white/20 hover:scale-105 hover:border-light-accent/30 dark:hover:border-dark-accent/30 cursor-pointer group" 
+                                title="View Credit Details"
+                            >
                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 flex h-2.5 w-2.5">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                                 </span>
-                                <span className="hidden sm:inline opacity-70 mr-1">Credits:</span>
+                                <span className="hidden sm:inline opacity-70 mr-1 group-hover:opacity-100 transition-opacity">Credits:</span>
                                 {remainingBriefings}
-                            </span>
+                            </button>
                         </div>
 
                         <button 

@@ -1,12 +1,18 @@
+
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { User } from '../types';
 import { AppContext } from '../App';
+import { REGIONS } from '../services/marineSightings';
 
 interface InputSectionProps {
   files: File[] | null;
   onFileChange: (files: File[] | null) => void;
   prompt: string;
   onPromptChange: (value: string) => void;
+  location: string;
+  onLocationChange: (value: string) => void;
+  region: string;
+  onRegionChange: (value: string) => void;
   onAttemptIdentify: () => void;
   isLoading: boolean;
   isBriefingLimitReached: boolean;
@@ -19,6 +25,10 @@ export const InputSection: React.FC<InputSectionProps> = ({
   onFileChange,
   prompt,
   onPromptChange,
+  location,
+  onLocationChange,
+  region,
+  onRegionChange,
   onAttemptIdentify,
   isLoading,
   isBriefingLimitReached,
@@ -26,6 +36,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
   onCancel
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [showLocationError, setShowLocationError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -33,7 +44,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
   const user = context?.user;
   
   // Strict Guest Check
-  const isGuest = user?.uid === 'mock-demo-user' || user?.email === 'guest@scubasteve.rocks';
+  const isGuest = user?.uid === 'mock-demo-user' || user?.email === 'scubasteve@scubasteve.rocks';
 
   useEffect(() => {
     if (files && files.length > 0) {
@@ -85,6 +96,9 @@ export const InputSection: React.FC<InputSectionProps> = ({
   const handleClearAll = () => {
       onFileChange(null);
       onPromptChange('');
+      onLocationChange('');
+      onRegionChange('');
+      setShowLocationError(false);
       if (fileInputRef.current) {
           fileInputRef.current.value = '';
       }
@@ -94,7 +108,16 @@ export const InputSection: React.FC<InputSectionProps> = ({
       fileInputRef.current?.click();
   };
 
-  const hasContent = (files && files.length > 0) || (prompt && prompt.length > 0);
+  const handleIdentifyClick = () => {
+      if (!location.trim() || !region) {
+          setShowLocationError(true);
+          return;
+      }
+      setShowLocationError(false);
+      onAttemptIdentify();
+  };
+
+  const hasContent = (files && files.length > 0);
 
   if (!user) return null;
 
@@ -167,15 +190,63 @@ export const InputSection: React.FC<InputSectionProps> = ({
         </div>
       )}
 
+      {/* Location & Region Inputs - REQUIRED */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="region" className="block font-semibold mb-1 text-light-text dark:text-dark-text">
+                Region <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="region"
+              value={region}
+              onChange={(e) => {
+                  onRegionChange(e.target.value);
+                  if (e.target.value) setShowLocationError(false);
+              }}
+              className={`w-full p-3 bg-light-bg dark:bg-dark-bg border rounded-lg focus:ring-2 focus:ring-light-accent dark:focus:ring-dark-accent focus:border-light-accent dark:focus:border-dark-accent transition-all ${showLocationError && !region ? 'border-red-500 ring-1 ring-red-500' : 'border-light-text/20 dark:border-dark-text/20'}`}
+              disabled={isBriefingLimitReached || isLoading}
+            >
+                <option value="" disabled>Select Region</option>
+                {REGIONS.filter(r => r !== 'Global').map(r => (
+                    <option key={r} value={r}>{r}</option>
+                ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="location" className="block font-semibold mb-1 text-light-text dark:text-dark-text">
+                Specific Location <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="location"
+              type="text"
+              value={location}
+              onChange={(e) => {
+                  onLocationChange(e.target.value);
+                  if (e.target.value.trim()) setShowLocationError(false);
+              }}
+              placeholder="e.g. Blue Hole"
+              className={`w-full p-3 bg-light-bg dark:bg-dark-bg border rounded-lg focus:ring-2 focus:ring-light-accent dark:focus:ring-dark-accent focus:border-light-accent dark:focus:border-dark-accent transition-all ${showLocationError && !location.trim() ? 'border-red-500 ring-1 ring-red-500' : 'border-light-text/20 dark:border-dark-text/20'}`}
+              disabled={isBriefingLimitReached || isLoading}
+            />
+          </div>
+      </div>
+      
+      {showLocationError && (
+        <p className="text-red-500 text-sm font-semibold animate-fade-in text-center bg-red-100 dark:bg-red-900/30 p-2 rounded">
+            Where did you take this photo? Please select a Region AND type the dive site/area so I can pin it on the world map.
+        </p>
+      )}
+
       <div>
-        <label htmlFor="prompt" className="block font-semibold mb-1">Add details (optional)</label>
+        <label htmlFor="prompt" className="block font-semibold mb-1 text-light-text/80 dark:text-dark-text/80 text-sm">Additional Notes (Optional)</label>
         <textarea
           id="prompt"
-          rows={3}
+          rows={2}
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
-          placeholder="e.g., 'Spotted in the Red Sea at 15m depth.'"
-          className="w-full p-3 bg-light-bg dark:bg-dark-bg border border-light-text/20 dark:border-dark-text/20 rounded-lg focus:ring-2 focus:ring-light-accent dark:focus:ring-dark-accent focus:border-light-accent dark:focus:border-dark-accent transition-all disabled:opacity-50"
+          placeholder="e.g., 'Found at 15m depth, very aggressive behavior.'"
+          className="w-full p-3 bg-light-bg dark:bg-dark-bg border border-light-text/20 dark:border-dark-text/20 rounded-lg focus:ring-2 focus:ring-light-accent dark:focus:ring-dark-accent focus:border-light-accent dark:focus:border-dark-accent transition-all disabled:opacity-50 text-sm"
           disabled={isBriefingLimitReached || isLoading}
         />
       </div>
@@ -188,7 +259,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold py-3 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 title="Clear all inputs"
               >
-                  Clear All
+                  Clear
               </button>
           )}
 
@@ -202,7 +273,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
               </button>
           ) : (
               <button 
-                onClick={onAttemptIdentify}
+                onClick={handleIdentifyClick}
                 disabled={isLoading || isBriefingLimitReached || !hasContent}
                 className="flex-grow bg-gradient-to-r from-light-primary-start to-light-accent text-white font-heading font-bold text-2xl py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20 transform hover:-translate-y-0.5 active:translate-y-0 disabled:from-gray-400 disabled:to-gray-500 disabled:text-gray-200 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
               >

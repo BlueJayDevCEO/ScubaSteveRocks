@@ -83,7 +83,7 @@ const HomeView: React.FC<HomeViewProps> = ({ setActiveView, setInitialIdentifyTa
                     <QuickActionChip 
                         icon="🎮" 
                         label="Play Scuba Sim" 
-                        onClick={() => window.open('https://scuba-steve-ai-game-702336659953.us-west1.run.app', '_blank')} 
+                        onClick={() => window.open('https://scuba-steve-ai-game-483432894986.us-west1.run.app', '_blank')} 
                     />
                     <QuickActionChip 
                         icon="🧠" 

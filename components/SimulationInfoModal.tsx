@@ -71,7 +71,7 @@ export const SimulationInfoModal: React.FC<SimulationInfoModalProps> = ({ onClos
 
         <div className="mt-6 pt-4 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row gap-3 justify-end">
             <a 
-                href="https://scuba-steve-ai-game-702336659953.us-west1.run.app"
+                href="https://scuba-steve-ai-game-483432894986.us-west1.run.app"
                 target="_blank"
                 rel="noopener noreferrer" 
                 className="flex-1 sm:flex-none text-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:scale-105 transition-transform shadow-lg"

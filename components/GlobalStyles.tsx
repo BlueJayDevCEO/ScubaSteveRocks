@@ -3,11 +3,44 @@ import React from 'react';
 
 export const GlobalStyles: React.FC = () => (
   <style>{`
-      a, button { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+      /* --- GLOBAL SCROLLBAR HIDING (The "Sexy" Clean Look) --- */
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      ::-webkit-scrollbar {
+          display: none;
+          width: 0px;
+          height: 0px;
+          background: transparent;
+      }
+
+      /* Hide scrollbar for IE, Edge and Firefox */
+      * {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+      }
+
+      /* --- CORE TYPOGRAPHY & UX --- */
+      html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
 
       body {
         padding-bottom: 90px; /* Space for bottom navigation bar */
-        overflow-x: hidden;
+        overflow-x: hidden; /* Prevent horizontal scroll */
+      }
+      
+      /* Selection Color */
+      ::selection {
+        background: rgba(0, 180, 216, 0.3); /* Light Cyan */
+        color: inherit;
+      }
+
+      a, button { 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent; /* Remove mobile tap gray box */
       }
 
       /* --- Cinematic Full Screen Background --- */
@@ -17,41 +50,61 @@ export const GlobalStyles: React.FC = () => (
           left: 0;
           width: 100vw;
           height: 100vh;
-          z-index: -1; /* Adjusted to -1 to sit just behind content but above default HTML bg */
-          background-color: #011627; /* Fallback Dark Blue Color */
-          /* Sexy, high-quality underwater shot with sunrays */
-          background-image: url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=2070&auto=format&fit=crop');
+          z-index: -1; 
+          background-color: #011627; 
+          /* Image is now set dynamically in App.tsx via inline styles */
           background-size: cover;
           background-position: center center;
           background-repeat: no-repeat;
+          transition: background-image 0.5s ease-in-out;
       }
 
-      /* Dark overlay to ensure text readability and sexy mood */
-      /* Updated: Reduced opacity to let more image shine through */
+      /* Dark overlay + Sun Rays Effect */
       .living-ocean-bg::after {
           content: '';
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(1, 22, 39, 0.4), rgba(1, 22, 39, 0.6));
+          background: linear-gradient(to bottom, rgba(1, 22, 39, 0.3), rgba(1, 22, 39, 0.8));
           backdrop-filter: blur(0px); 
+      }
+      
+      /* Sun Rays Animation Layer */
+      .living-ocean-bg::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%),
+                      conic-gradient(from 90deg at 50% 0%, transparent 0deg, rgba(255, 255, 255, 0.03) 20deg, transparent 40deg, rgba(255, 255, 255, 0.03) 60deg, transparent 80deg);
+          animation: sun-rays-rotate 60s linear infinite;
+          pointer-events: none;
+          z-index: 0;
+      }
+
+      @keyframes sun-rays-rotate {
+          0% { transform: rotate(-5deg) translateY(0); opacity: 0.5; }
+          50% { transform: rotate(5deg) translateY(-2%); opacity: 0.8; }
+          100% { transform: rotate(-5deg) translateY(0); opacity: 0.5; }
       }
 
       .dark .living-ocean-bg::after {
-          background: linear-gradient(to bottom, rgba(1, 10, 20, 0.5), rgba(0, 0, 0, 0.7));
+          background: linear-gradient(to bottom, rgba(1, 10, 20, 0.4), rgba(0, 0, 0, 0.85));
       }
 
-      /* --- Glassmorphism System (Enhanced) --- */
+      /* --- Glassmorphism System (Refined) --- */
       .glass-panel {
-          background: rgba(255, 255, 255, 0.85);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.5);
-          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+          background: rgba(255, 255, 255, 0.75);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
       }
 
       .dark .glass-panel {
-          background: rgba(10, 25, 47, 0.75); /* Deep blue glass */
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(10, 25, 47, 0.65); /* Deep blue glass */
+          border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
       }
       
@@ -65,7 +118,29 @@ export const GlobalStyles: React.FC = () => (
           background: linear-gradient(135deg, #48cae4 0%, #90e0ef 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          text-shadow: 0 0 20px rgba(72, 202, 228, 0.3);
+          text-shadow: 0 0 30px rgba(72, 202, 228, 0.4);
+      }
+      
+      /* --- Shimmer Animation for Text --- */
+      @keyframes text-shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+      }
+      
+      .animate-text-shimmer {
+          background: linear-gradient(to right, #ffffff 20%, #48cae4 40%, #48cae4 60%, #ffffff 80%);
+          background-size: 200% auto;
+          color: #fff;
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: text-shimmer 5s linear infinite;
+      }
+
+      /* Landing Page Specifics */
+      .mask-image-linear-gradient {
+          mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
       }
 
       /* --- Surface Interval Widget Styles --- */
@@ -118,11 +193,6 @@ export const GlobalStyles: React.FC = () => (
       @keyframes sonar-sweep {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
-      }
-
-      html {
-        scroll-behavior: smooth;
-        scroll-padding-top: 90px;
       }
       
       /* Custom Prose styles */

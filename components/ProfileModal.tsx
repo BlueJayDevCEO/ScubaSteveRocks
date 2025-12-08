@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { User } from '../types';
 import { SCUBA_STEVE_AVATAR } from './ScubaSteveLogo';
-import { AppContext } from '../App';
+import { AppContext, BACKGROUNDS } from '../App';
 
 interface ProfileModalProps {
   user: User;
@@ -14,6 +14,8 @@ interface ProfileModalProps {
 export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onSave, onShowTour }) => {
   const context = useContext(AppContext);
   const configAvatar = context?.config?.avatarUrl || SCUBA_STEVE_AVATAR;
+  const currentBgId = context?.backgroundId || 'default';
+  const setBackgroundId = context?.setBackgroundId;
 
   const [editedName, setEditedName] = useState(user.displayName || '');
   const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(user.photoURL || null);
@@ -55,7 +57,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onSav
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in border border-light-accent/20 dark:border-dark-accent/20">
+      <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in border border-light-accent/20 dark:border-dark-accent/20 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
             <h2 className="font-heading font-semibold text-3xl">Edit Profile</h2>
             <button onClick={onClose} className="text-2xl text-light-text/70 dark:text-dark-text/70 hover:text-light-accent dark:hover:text-dark-accent transition-colors">&times;</button>
@@ -92,6 +94,30 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onSav
                     className="w-full p-3 bg-light-bg dark:bg-dark-bg border border-light-accent/30 dark:border-dark-accent/30 rounded-lg focus:ring-2 focus:ring-light-accent dark:focus:ring-dark-accent focus:border-light-accent dark:focus:border-dark-accent transition-shadow text-base placeholder-light-text/50 dark:placeholder-dark-text/50"
                 />
             </div>
+
+            {/* Background Theme Selector */}
+            <div className="w-full">
+                <h3 className="font-heading font-semibold text-lg mb-3">Visual Theme</h3>
+                <div className="grid grid-cols-3 gap-2">
+                    {BACKGROUNDS.map((bg) => (
+                        <button
+                            key={bg.id}
+                            onClick={() => setBackgroundId && setBackgroundId(bg.id)}
+                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all group ${currentBgId === bg.id ? 'border-light-accent dark:border-dark-accent scale-105 shadow-md' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                            title={bg.name}
+                        >
+                            <img src={bg.url} alt={bg.name} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/30 flex items-end justify-center pb-1">
+                                <span className="text-[10px] text-white font-bold truncate px-1 shadow-sm">{bg.name}</span>
+                            </div>
+                            {currentBgId === bg.id && (
+                                <div className="absolute top-1 right-1 bg-green-500 rounded-full w-4 h-4 flex items-center justify-center text-white text-xs">✓</div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
              <div className="w-full grid grid-cols-1 gap-4">
                 <div className="text-center p-3 bg-light-bg/50 dark:bg-dark-bg/50 rounded-lg">
                     <p className="text-sm text-light-text/70 dark:text-dark-text/70">Total Identifications</p>

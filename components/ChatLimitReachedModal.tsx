@@ -1,6 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { CountdownTimer } from './CountdownTimer';
+import { AppContext } from '../App';
+import { createCheckoutSession } from '../services/stripeService';
 
 interface ChatLimitReachedModalProps {
   onClose: () => void;
@@ -8,6 +10,9 @@ interface ChatLimitReachedModalProps {
 
 export const ChatLimitReachedModal: React.FC<ChatLimitReachedModalProps> = ({ onClose }) => {
   const [showCrypto, setShowCrypto] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const context = useContext(AppContext);
+  const user = context?.user;
   
   const getExpiryTimestamp = () => {
     const now = new Date();
@@ -15,6 +20,20 @@ export const ChatLimitReachedModal: React.FC<ChatLimitReachedModalProps> = ({ on
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     return tomorrow.getTime();
+  };
+
+  const handleSupport = async () => {
+      if (!user || user.uid === 'mock-demo-user' || user.email === 'scubasteve@scubasteve.rocks') {
+          alert("Please sign in to subscribe.");
+          return;
+      }
+      setIsLoading(true);
+      try {
+          await createCheckoutSession(user.uid, 'subscription');
+      } catch (e) {
+          console.error(e);
+          setIsLoading(false);
+      }
   };
 
   return (
@@ -33,14 +52,13 @@ export const ChatLimitReachedModal: React.FC<ChatLimitReachedModalProps> = ({ on
         </p>
         
         <div className="flex flex-col gap-3">
-          <a 
-            href="https://buy.stripe.com/eVq4gy8wj090bjZgGA1ZS0e"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full block text-center bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-xl py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20"
+          <button
+            onClick={handleSupport}
+            disabled={isLoading}
+            className="w-full block text-center bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-xl py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20 disabled:opacity-50"
           >
-            Support with Stripe 💳
-          </a>
+            {isLoading ? 'Connecting...' : 'Upgrade to Pro ($9.99/mo) 💳'}
+          </button>
            <button 
             onClick={() => setShowCrypto(!showCrypto)}
             className="w-full bg-light-primary-end/20 dark:bg-dark-primary-end/20 text-light-primary-end dark:text-dark-primary-end font-bold text-lg py-2 rounded-lg hover:bg-light-primary-end/30 dark:hover:bg-dark-primary-end/30 transition-colors"

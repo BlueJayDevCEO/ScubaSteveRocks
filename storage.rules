@@ -2,22 +2,31 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // ---- 1. Marine Photos (For Sighting Map) ----
-    // Path used in services/marineSightings.ts: marine-photos/{userId}/{fileName}
+    // --- 1. Marine Photos (User Uploads) ---
+    // Path: marine-photos/{userId}/{fileName}
     match /marine-photos/{userId}/{allPaths=**} {
-      // Authenticated users can upload to their own folder
+      // Security: Only the owner can upload/delete
       allow write: if request.auth != null && request.auth.uid == userId;
-      // Anyone can view the images (required for the public map)
+      
+      // Accessibility: Everyone can read (Required for Global Map display)
       allow read: if true;
     }
 
-    // ---- 2. Public Assets (Static) ----
+    // --- 2. System/Seeded Photos ---
+    // Path: marine-photos/system/{fileName}
+    match /marine-photos/system/{allPaths=**} {
+       allow read: if true;
+       allow write: if false; // Admin upload only via Console
+    }
+
+    // --- 3. Public Assets (Static) ---
+    // Path: public/logo.png, etc.
     match /public/{allPaths=**} {
       allow read: if true;
       allow write: if false;
     }
 
-    // ---- 3. Default Block ----
+    // --- 4. Default Block ---
     match /{allPaths=**} {
       allow read, write: if false;
     }

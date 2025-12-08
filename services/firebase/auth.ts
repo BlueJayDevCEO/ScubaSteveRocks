@@ -1,3 +1,4 @@
+
 import { 
   getAuth, 
   signInWithPopup, 
@@ -22,7 +23,7 @@ const googleProvider = new GoogleAuthProvider();
 export const DEMO_USER: User = {
     uid: 'mock-demo-user',
     displayName: 'Ocean Explorer (Offline)',
-    email: 'guest@scubasteve.rocks',
+    email: 'scubasteve@scubasteve.rocks',
     photoURL: SCUBA_STEVE_AVATAR,
     identificationCount: 0,
     dailyUsage: {
@@ -30,7 +31,8 @@ export const DEMO_USER: User = {
         briefingCount: 0,
     },
     contributesData: false,
-    isPro: false
+    isPro: false,
+    lastPlatform: 'web'
 };
 
 // Helper to map Firebase user to App user
@@ -39,7 +41,7 @@ const mapFirebaseUserToAppUser = (fbUser: FirebaseUser): User => {
     return {
         uid: fbUser.uid,
         displayName: fbUser.displayName || (isAnonymous ? 'Ocean Explorer (Guest)' : 'Diver'),
-        email: fbUser.email || (isAnonymous ? 'guest@scubasteve.rocks' : null),
+        email: fbUser.email || (isAnonymous ? 'scubasteve@scubasteve.rocks' : null),
         photoURL: fbUser.photoURL || SCUBA_STEVE_AVATAR,
         identificationCount: 0,
         dailyUsage: {
@@ -47,6 +49,7 @@ const mapFirebaseUserToAppUser = (fbUser: FirebaseUser): User => {
             briefingCount: 0,
         },
         contributesData: true, // Guests default to true to populate map, can toggle off
+        lastPlatform: 'web',
     };
 };
 

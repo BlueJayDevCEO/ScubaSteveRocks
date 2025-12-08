@@ -1,6 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { CountdownTimer } from './CountdownTimer';
+import { AppContext } from '../App';
+import { createCheckoutSession } from '../services/stripeService';
 
 interface LimitReachedModalProps {
   onClose: () => void;
@@ -8,7 +10,9 @@ interface LimitReachedModalProps {
 
 export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({ onClose }) => {
   const [showCrypto, setShowCrypto] = useState(false);
-  const [donationStatus, setDonationStatus] = useState<'idle' | 'thank_you'>('idle');
+  const [isLoading, setIsLoading] = useState(false);
+  const context = useContext(AppContext);
+  const user = context?.user;
   
   const getExpiryTimestamp = () => {
     const now = new Date();
@@ -18,12 +22,19 @@ export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({ onClose })
     return tomorrow.getTime();
   };
 
-  const handleDonation = () => {
-    setDonationStatus('thank_you');
-    setTimeout(() => {
-        setDonationStatus('idle');
-    }, 5000); // Reset after 5 seconds
-  }
+  const handleSupport = async () => {
+      if (!user || user.uid === 'mock-demo-user' || user.email === 'scubasteve@scubasteve.rocks') {
+          alert("Please sign in to subscribe.");
+          return;
+      }
+      setIsLoading(true);
+      try {
+          await createCheckoutSession(user.uid, 'subscription');
+      } catch (e) {
+          console.error(e);
+          setIsLoading(false);
+      }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -36,30 +47,21 @@ export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({ onClose })
         <p className="font-semibold text-light-text dark:text-dark-text mb-2">Time until reset:</p>
         <CountdownTimer expiryTimestamp={getExpiryTimestamp()} onComplete={onClose} />
         
-        {donationStatus === 'thank_you' ? (
-             <div className="text-center p-3 my-4 bg-light-primary-end/10 text-light-primary-end dark:bg-dark-primary-end/10 dark:text-dark-primary-end rounded-lg font-semibold animate-fade-in">
-                Thank you for your support! 🌊
-            </div>
-        ) : (
-             <p className="text-sm text-light-text/70 dark:text-dark-text/70 mb-6">
-                OSEA Diver™ donates up to 25% of all proceeds to verified marine-conservation partners. Your support helps us cover server costs and fund this mission.
-            </p>
-        )}
+        <p className="text-sm text-light-text/70 dark:text-dark-text/70 mb-6">
+            Upgrade to Pro for unlimited access and help us fund marine conservation.
+        </p>
         
         <div className="flex flex-col gap-3">
-          <a 
-            href="https://buy.stripe.com/eVq4gy8wj090bjZgGA1ZS0e"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={handleDonation}
-            className="w-full block text-center bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-xl py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20"
+          <button
+            onClick={handleSupport}
+            disabled={isLoading}
+            className="w-full block text-center bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-xl py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20 disabled:opacity-50"
           >
-            Support with Stripe 💳
-          </a>
+            {isLoading ? 'Connecting to Stripe...' : 'Upgrade to Pro ($9.99/mo) 👑'}
+          </button>
           <button 
             onClick={() => {
                 setShowCrypto(!showCrypto);
-                if (!showCrypto) handleDonation(); // Show thank you on reveal
             }}
             className="w-full bg-light-primary-end/20 dark:bg-dark-primary-end/20 text-light-primary-end dark:text-dark-primary-end font-bold text-lg py-2 rounded-lg hover:bg-light-primary-end/30 dark:hover:bg-dark-primary-end/30 transition-colors"
           >

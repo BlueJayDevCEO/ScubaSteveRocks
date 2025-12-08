@@ -7,6 +7,8 @@ export const barToPsi = (bar: number): number => bar * 14.5038;
 export const psiToBar = (psi: number): number => psi / 14.5038;
 export const kgToLbs = (kg: number): number => kg * 2.20462;
 export const lbsToKg = (lbs: number): number => lbs / 2.20462;
+export const celsiusToFahrenheit = (celsius: number): number => (celsius * 9/5) + 32;
+export const fahrenheitToCelsius = (fahrenheit: number): number => (fahrenheit - 32) * 5/9;
 
 
 // --- Core Dive Calculations ---

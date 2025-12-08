@@ -138,7 +138,7 @@ export const BriefingCard: React.FC<{ briefing: Briefing; onSelectBriefing: (bri
 
 
 const LogbookView: React.FC<LogbookViewProps> = ({ onSelectBriefing, onImportBriefings, initialTab }) => {
-    const [activeTab, setActiveTab] = useState<LogbookTab>(initialTab || 'log');
+    const [activeTab, setActiveTab] = useState<LogbookTab>(initialTab || 'dives');
     const [searchTerm, setSearchTerm] = useState('');
     const context = useContext(AppContext);
     if (!context) return null;
@@ -152,12 +152,25 @@ const LogbookView: React.FC<LogbookViewProps> = ({ onSelectBriefing, onImportBri
 
     const filteredAndSortedBriefings = useMemo(() => {
         const sorted = [...briefings].sort((a, b) => b.createdAt - a.createdAt);
+        
+        // 1. Filter by Tab Category
+        let tabFiltered = sorted;
+        if (activeTab === 'dives') {
+            // "Actual" Dives: Imported CSV logs or manually added logs (future)
+            // Ideally also 'marine_id' if user flagged it as a dive, but for now strict separation
+            tabFiltered = sorted.filter(b => b.type === 'imported_dive');
+        } else if (activeTab === 'activity') {
+            // App Usage: Everything NOT an imported dive
+            tabFiltered = sorted.filter(b => b.type !== 'imported_dive');
+        }
+
+        // 2. Filter by Search Term
         if (!searchTerm.trim()) {
-            return sorted;
+            return tabFiltered;
         }
         const lowerCaseSearch = searchTerm.toLowerCase();
 
-        return sorted.filter(b => {
+        return tabFiltered.filter(b => {
             const searchableText = [
                 b.correction?.final_species,
                 b.output?.suggestion?.species_name,
@@ -171,33 +184,39 @@ const LogbookView: React.FC<LogbookViewProps> = ({ onSelectBriefing, onImportBri
 
             return searchableText.includes(lowerCaseSearch);
         });
-    }, [briefings, searchTerm]);
+    }, [briefings, searchTerm, activeTab]);
 
     return (
         <div className="w-full animate-fade-in">
             <h2 className="font-heading font-bold text-3xl text-center mb-6">Your Dive Logbook</h2>
             
-            <div className="flex items-center justify-center border-b border-black/10 dark:border-white/10 mb-6">
+            <div className="flex items-center justify-center border-b border-black/10 dark:border-white/10 mb-6 overflow-x-auto">
                 <button 
-                    onClick={() => setActiveTab('log')} 
-                    className={`px-4 py-3 font-semibold transition-colors ${activeTab === 'log' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}
+                    onClick={() => setActiveTab('dives')} 
+                    className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'dives' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}
                 >
-                    My Log ({briefings.length})
+                    🤿 Dive Logs
+                </button>
+                <button 
+                    onClick={() => setActiveTab('activity')} 
+                    className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'activity' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}
+                >
+                    🤖 App Activity
                 </button>
                 <button 
                     onClick={() => setActiveTab('import')} 
-                    className={`px-4 py-3 font-semibold transition-colors ${activeTab === 'import' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}
+                    className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'import' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}
                 >
-                    Import Dives
+                    📥 Import
                 </button>
             </div>
 
-            {activeTab === 'log' && (
+            {(activeTab === 'dives' || activeTab === 'activity') && (
                  <div>
                       <div className="mb-6 relative">
                         <input
                             type="search"
-                            placeholder="Search by species, location, notes..."
+                            placeholder={activeTab === 'dives' ? "Search locations, dates, notes..." : "Search IDs, chats, recipes..."}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full p-3 pl-10 bg-light-bg dark:bg-dark-bg border border-light-text/20 dark:border-dark-text/20 rounded-lg focus:ring-2 focus:ring-light-accent dark:focus:ring-dark-accent focus:border-light-accent dark:focus:border-dark-accent transition-all"
@@ -216,8 +235,13 @@ const LogbookView: React.FC<LogbookViewProps> = ({ onSelectBriefing, onImportBri
                         </div>
                      ) : (
                         <div className="text-center text-lg text-light-text/70 dark:text-dark-text/70 py-12">
-                            <p>{searchTerm ? `No results found for "${searchTerm}".` : "Your activity log is empty."}</p>
-                            {!searchTerm && <p className="mt-2 text-base">Identified species, color corrections, and imported dives will appear here.</p>}
+                            <p>{searchTerm ? `No results found for "${searchTerm}".` : "No entries found in this category."}</p>
+                            {!searchTerm && activeTab === 'dives' && (
+                                <div className="mt-4">
+                                    <p className="mb-4">You haven't imported any dives yet.</p>
+                                    <button onClick={() => setActiveTab('import')} className="text-light-accent dark:text-dark-accent font-bold hover:underline">Import Dives Now &rarr;</button>
+                                </div>
+                            )}
                         </div>
                      )}
                 </div>

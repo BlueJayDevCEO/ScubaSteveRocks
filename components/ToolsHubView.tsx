@@ -16,7 +16,6 @@ import { DepthCorrectionCalculator } from './calculators/DepthCorrectionCalculat
 import { BoylesLawCalculator } from './calculators/BoylesLawCalculator';
 import { TimeRemainingCalculator } from './calculators/TimeRemainingCalculator';
 import { GasBlenderCalculator } from './calculators/GasBlenderCalculator';
-import { SystemDiagnostics } from './calculators/SystemDiagnostics';
 import { Briefing } from '../types';
 
 type View = 'home' | 'identify' | 'chat' | 'logbook' | 'map' | 'partner_portal' | 'tools' | 'trip_planner' | 'dive_site_lookup' | 'surface_interval' | 'voice_chat' | 'blog' | 'scuba_news' | 'topics' | 'game';
@@ -44,12 +43,13 @@ interface ToolInfo {
   functionSlug?: string;
   externalUrl?: string;
   colorClass?: string;
+  onClick?: () => void; // Added for direct function calls like seeding
 }
 
 const ALL_TOOLS: ToolInfo[] = [
   // Training
   { id: 'training_game', title: 'Knowledge Quiz', description: 'Level up your scuba knowledge', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, action: 'navigate', navTarget: { view: 'game' }, category: 'Training', colorClass: "from-amber-400/20 to-orange-500/20 text-amber-600 dark:text-amber-400" },
-  { id: 'sim_game', title: 'Scuba Steve Sim', description: 'Play the Simulation Game', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>, action: 'external_link', externalUrl: 'https://scuba-steve-ai-game-702336659953.us-west1.run.app', category: 'Training', colorClass: "from-purple-400/20 to-fuchsia-500/20 text-purple-600 dark:text-purple-400" },
+  { id: 'sim_game', title: 'Scuba Steve Sim', description: 'Play the Simulation Game', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>, action: 'external_link', externalUrl: 'https://scuba-steve-ai-game-483432894986.us-west1.run.app', category: 'Training', colorClass: "from-purple-400/20 to-fuchsia-500/20 text-purple-600 dark:text-purple-400" },
 
   // Planners & Info
   { id: 'trip_planner', title: 'Trip Planner', description: 'Generate a custom dive itinerary', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 10l6-3m0 0l-6-4m6 4v10" /></svg>, category: 'Planners & Info', action: 'navigate', navTarget: { view: 'trip_planner' }, colorClass: "from-emerald-400/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400" },
@@ -78,7 +78,6 @@ const ALL_TOOLS: ToolInfo[] = [
   { id: 'repetitive_dive', title: 'Repetitive Planner', description: 'Plan next dive NDL', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>, component: RepetitiveDiveCalculator, action: 'component', category: 'Dive Tables', colorClass: "from-slate-400/20 to-blue-500/20 text-slate-600 dark:text-slate-400" },
   
   // Utilities
-  { id: 'system_diagnostics', title: 'System Check', description: 'Verify calculator logic', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>, component: SystemDiagnostics, action: 'component', category: 'Utilities', colorClass: "from-gray-500/20 to-zinc-600/20 text-gray-600 dark:text-gray-400" },
   { id: 'depth_correction', title: 'Depth Correction', description: 'Freshwater vs Salt', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>, component: DepthCorrectionCalculator, action: 'component', category: 'Utilities', colorClass: "from-cyan-400/20 to-blue-500/20 text-cyan-600 dark:text-cyan-400" },
   { id: 'boyles_law', title: "Boyle's Law", description: 'Air volume changes', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2 1M4 7l2-1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg>, component: BoylesLawCalculator, action: 'component', category: 'Utilities', colorClass: "from-indigo-400/20 to-violet-500/20 text-indigo-600 dark:text-indigo-400" },
   { id: 'units', title: 'Unit Conversion', description: 'Metric & Imperial', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 17h16M10 3v18M14 3v18" /></svg>, component: UnitConverter, action: 'component', category: 'Utilities', colorClass: "from-slate-400/20 to-gray-500/20 text-slate-600 dark:text-slate-400" },
@@ -121,6 +120,8 @@ const ToolsHubView: React.FC<ToolsHubViewProps> = ({ setActiveView, setInitialCh
             onViewPost(tool.functionSlug);
         } else if (tool.action === 'external_link' && tool.externalUrl) {
             window.open(tool.externalUrl, '_blank');
+        } else if (tool.action === 'function' && tool.onClick) {
+            tool.onClick();
         }
     };
     

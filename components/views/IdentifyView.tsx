@@ -16,7 +16,7 @@ interface IdentifyViewProps {
     setSelectedFiles: (files: File[] | null) => void;
     prompt: string;
     setPrompt: (prompt: string) => void;
-    handleMarineId: (files: File[] | null, prompt: string) => void;
+    handleMarineId: (files: File[] | null, prompt: string, location: string, region: string) => void;
     handleColorCorrect: (files: File[], style: CorrectionStyle) => void;
     handleSpeciesSearch: (query: string) => void;
     handleStartNewIdentification: () => void;
@@ -33,12 +33,16 @@ interface IdentifyViewProps {
     isBriefingLimitReached: boolean;
     handleSelectBriefingFromHistory: (briefing: Briefing) => void;
     onCancel?: () => void;
+    onShowMap: () => void;
 }
 
 const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
     const [activeTab, setActiveTab] = useState<IdentifyViewTab>(props.initialTab || 'upload');
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [sortOption, setSortOption] = useState<'date_desc' | 'date_asc' | 'species_asc' | 'species_desc'>('date_desc');
+    const [location, setLocation] = useState(''); // Lifted location state
+    const [region, setRegion] = useState(''); // Lifted region state
+
     const context = useContext(AppContext);
     if (!context) return null;
     const { user, briefings, setBriefings, setUser } = context;
@@ -110,6 +114,12 @@ const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
         }
     };
 
+    const handleStartNew = () => {
+        setLocation(''); // Clear location on reset
+        setRegion(''); // Clear region on reset
+        props.handleStartNewIdentification();
+    };
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-center border-b border-black/10 dark:border-white/10 mb-6 overflow-x-auto">
@@ -117,6 +127,9 @@ const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
                 <button onClick={() => setActiveTab('search')} className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'search' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}>Species Search</button>
                 <button onClick={() => setActiveTab('gallery')} className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'gallery' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}>Gallery</button>
                 <button onClick={() => setActiveTab('color')} className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap ${activeTab === 'color' ? 'text-light-accent dark:text-dark-accent border-b-2 border-light-accent dark:border-dark-accent' : 'text-light-text/70 dark:text-dark-text/70'}`}>Color Correction</button>
+                <button onClick={props.onShowMap} className={`px-4 py-3 font-semibold transition-colors whitespace-nowrap text-light-text/70 dark:text-dark-text/70 hover:text-light-accent dark:hover:text-dark-accent`}>
+                    World Sightings 🌍
+                </button>
             </div>
             
             <div className="animate-fade-in">
@@ -128,7 +141,11 @@ const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
                                 onFileChange={props.setSelectedFiles}
                                 prompt={props.prompt}
                                 onPromptChange={props.setPrompt}
-                                onAttemptIdentify={() => props.handleMarineId(props.selectedFiles, props.prompt)}
+                                location={location}
+                                onLocationChange={setLocation}
+                                region={region}
+                                onRegionChange={setRegion}
+                                onAttemptIdentify={() => props.handleMarineId(props.selectedFiles, props.prompt, location, region)}
                                 isLoading={props.isLoading}
                                 isBriefingLimitReached={props.isBriefingLimitReached}
                                 remainingBriefings={DAILY_STANDARD_LIMIT - (user.dailyUsage.briefingCount || 0)}
@@ -146,7 +163,7 @@ const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
                                     onStartChat={() => props.handleOpenChat(props.currentBriefingResult)}
                                     isCorrecting={props.isCorrecting}
                                     isDemo={false}
-                                    onStartNewIdentification={props.handleStartNewIdentification}
+                                    onStartNewIdentification={handleStartNew}
                                     onGenerateImage={handleGenerateImage}
                                     isGeneratingImage={isGeneratingImage}
                                 />
@@ -205,7 +222,7 @@ const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
                                 onStartChat={() => props.handleOpenChat(props.currentBriefingResult)}
                                 isCorrecting={props.isCorrecting}
                                 isDemo={false}
-                                onStartNewIdentification={props.handleStartNewIdentification}
+                                onStartNewIdentification={handleStartNew}
                                 onGenerateImage={handleGenerateImage}
                                 isGeneratingImage={isGeneratingImage}
                             />
@@ -246,7 +263,7 @@ const IdentifyView: React.FC<IdentifyViewProps> = (props) => {
                         error={props.error} 
                         isBriefingLimitReached={props.isBriefingLimitReached}
                         onOpenChat={() => props.handleOpenChat(null, null)}
-                        onStartNew={props.handleStartNewIdentification}
+                        onStartNew={handleStartNew}
                         onCancel={props.onCancel}
                     />
                 )}

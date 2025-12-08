@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ScubaSteveLogo } from './ScubaSteveLogo';
+import { AppConfig } from '../types';
 
 const chilledMessages = [
   "Drifting with the current... 🌊",
@@ -17,9 +18,10 @@ const chilledMessages = [
 interface GlobalLoaderProps {
     isLoading: boolean;
     onCancel?: () => void;
+    config?: AppConfig;
 }
 
-export const GlobalLoader: React.FC<GlobalLoaderProps> = ({ isLoading, onCancel }) => {
+export const GlobalLoader: React.FC<GlobalLoaderProps> = ({ isLoading, onCancel, config }) => {
     const [message, setMessage] = useState(chilledMessages[0]);
     const [dots, setDots] = useState('');
 
@@ -70,16 +72,16 @@ export const GlobalLoader: React.FC<GlobalLoaderProps> = ({ isLoading, onCancel 
                     <div className="absolute inset-0 border-2 border-dashed border-light-accent/30 dark:border-dark-accent/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
                     <div className="absolute inset-4 border-2 border-dotted border-light-accent/40 dark:border-dark-accent/40 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
                     
-                    {/* Steve Floating Lazily */}
+                    {/* Steve Floating Lazily - using custom avatar if available */}
                     <div className="relative w-32 h-32 animate-float-steve">
                         <div className="w-full h-full rounded-2xl bg-white/10 backdrop-blur-sm shadow-[0_0_30px_rgba(0,180,216,0.3)] flex items-center justify-center border border-white/30 p-2">
-                            <ScubaSteveLogo className="w-full h-full drop-shadow-lg" />
+                            <ScubaSteveLogo className="w-full h-full drop-shadow-lg" src={config?.avatarUrl} />
                         </div>
                     </div>
                 </div>
 
                 <h2 className="font-heading font-bold text-3xl sm:text-4xl text-light-text dark:text-dark-text mb-4 tracking-wide drop-shadow-md">
-                    Thinking{dots}
+                    Diving for answer{dots}
                 </h2>
                 
                 <div className="h-8 overflow-hidden flex items-center justify-center">

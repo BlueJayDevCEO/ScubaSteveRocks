@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { AppContext } from '../App';
+import { createCheckoutSession } from '../services/stripeService';
 
 interface AffiliateCardProps {
     title: React.ReactNode;
@@ -53,12 +55,25 @@ interface AffiliateSectionProps {
 
 export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onOpenShop, onOpenChat, setActiveView }) => {
     const [showCryptoDonation, setShowCryptoDonation] = useState(false);
-    const [donationStatus, setDonationStatus] = useState<'idle' | 'thank_you'>('idle');
+    const [isLoading, setIsLoading] = useState(false);
     const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+    
+    const context = useContext(AppContext);
+    const user = context?.user;
 
-    const handleDonationClick = () => {
-        setDonationStatus('thank_you');
-        setTimeout(() => setDonationStatus('idle'), 5000); // Reset after 5 seconds
+    const handleDonationClick = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!user || user.uid === 'mock-demo-user' || user.email === 'scubasteve@scubasteve.rocks') {
+            alert("Please sign in to donate securely.");
+            return;
+        }
+        setIsLoading(true);
+        try {
+            await createCheckoutSession(user.uid, 'donation');
+        } catch (err) {
+            console.error(err);
+            setIsLoading(false);
+        }
     }
 
     const handlePortalClick = () => {
@@ -133,31 +148,23 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onOpenShop, 
                         </div>
                     </div>
                     
-                     {donationStatus === 'thank_you' ? (
-                        <div className="text-center p-3 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg font-bold animate-fade-in border border-green-500/20">
-                            Thank you for your support! 🌊
-                        </div>
-                    ) : (
-                        <div className="flex flex-col sm:flex-row gap-3 mt-auto">
-                            <a 
-                                href="https://buy.stripe.com/eVq4gy8wj090bjZgGA1ZS0e" 
-                                onClick={handleDonationClick} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="flex-1 text-center bg-light-accent dark:bg-dark-accent text-white font-bold py-2.5 px-4 rounded-lg hover:opacity-90 transition-colors shadow-md flex items-center justify-center gap-2"
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                                Donate via Stripe
-                            </a>
-                            <button 
-                                onClick={() => { setShowCryptoDonation(!showCryptoDonation); }} 
-                                className={`flex-1 font-bold py-2.5 px-4 rounded-lg transition-colors border flex items-center justify-center gap-2 ${showCryptoDonation ? 'bg-light-primary-end/20 border-light-primary-end text-light-primary-end dark:bg-dark-primary-end/20 dark:border-dark-primary-end dark:text-dark-primary-end' : 'bg-transparent border-light-text/20 text-light-text/70 hover:border-light-text/50 dark:border-dark-text/20 dark:text-dark-text/70 dark:hover:border-dark-text/50'}`}
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                                {showCryptoDonation ? 'Hide Crypto' : 'Crypto'}
-                            </button>
-                        </div>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+                        <button
+                            onClick={handleDonationClick}
+                            disabled={isLoading}
+                            className="flex-1 text-center bg-light-accent dark:bg-dark-accent text-white font-bold py-2.5 px-4 rounded-lg hover:opacity-90 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                            {isLoading ? 'Connecting...' : 'Donate via Stripe'}
+                        </button>
+                        <button 
+                            onClick={() => { setShowCryptoDonation(!showCryptoDonation); }} 
+                            className={`flex-1 font-bold py-2.5 px-4 rounded-lg transition-colors border flex items-center justify-center gap-2 ${showCryptoDonation ? 'bg-light-primary-end/20 border-light-primary-end text-light-primary-end dark:bg-dark-primary-end/20 dark:border-dark-primary-end dark:text-dark-primary-end' : 'bg-transparent border-light-text/20 text-light-text/70 hover:border-light-text/50 dark:border-dark-text/20 dark:text-dark-text/70 dark:hover:border-dark-text/50'}`}
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            {showCryptoDonation ? 'Hide Crypto' : 'Crypto'}
+                        </button>
+                    </div>
                     
                     {showCryptoDonation && (
                         <div className="mt-2 space-y-3 p-3 bg-light-bg dark:bg-dark-bg rounded-lg text-left text-sm animate-fade-in border border-black/5 dark:border-white/5">

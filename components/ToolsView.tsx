@@ -3,7 +3,7 @@ import React from 'react';
 
 type View = 'home' | 'identify' | 'chat' | 'logbook' | 'map' | 'partner_portal' | 'tools';
 type ChatViewTab = 'ask' | 'plan' | 'local_conditions' | 'dive_diet' | 'calculators' | 'voice' | 'blog' | 'scuba_news';
-type LogbookTab = 'log' | 'import';
+type LogbookTab = 'dives' | 'activity' | 'import';
 
 interface ToolsViewProps {
     setActiveView: (view: View) => void;
@@ -24,7 +24,7 @@ const tools = [
   {
     title: 'Sighting Map',
     description: 'Explore a global map of recent marine life sightings.',
-    icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 10l6-3m0 0l-6-4m6 4v10" /></svg>,
+    icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 10l6-3m0 0l-6-4m6 4v10" /></svg>,
     action: (props: ToolsViewProps) => {
       props.setActiveView('map');
     }

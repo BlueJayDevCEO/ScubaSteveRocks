@@ -60,6 +60,7 @@ export interface Briefing {
   contributionLogged?: boolean;
   // Dive Log fields
   location?: string;
+  region?: string; // Added for Sorting into Regional Files
   dive_time?: number; // in minutes
   max_depth?: number; // in meters
   dive_buddy?: string;
@@ -99,17 +100,45 @@ export interface User {
   displayName: string | null;
   email: string | null;
   photoURL?: string | null;
+
+  // CORE APP FLAGS
   identificationCount: number;
   dailyUsage: {
     date: string; // YYYY-MM-DD
     briefingCount: number; // Tracks Standard Actions
     premiumCount?: number; // Tracks Expensive Actions (Search, Voice, Plan)
   };
+  
+  // Weekly limits for Map Uploads (Cost Control)
+  weeklyContributionCount?: number; 
+  lastWeeklyReset?: number; // Timestamp
+
   lastVoiceUsage?: number; // Timestamp of last voice chat usage (weekly limit)
   contributesData: boolean;
   gameProgress?: GameProgress;
   isPro?: boolean;
   savedSites?: SavedSite[];
+
+  // 🔥 NEW: PROFILE & DIVE INFO
+  homeCountry?: string;        // e.g. "South Africa"
+  homeCityOrRegion?: string;   // e.g. "Cape Town", "Red Sea"
+  primaryDiveAgency?: string;  // "PADI", "SSI", "CMAS", etc.
+  certificationLevel?: string; // "OW", "AOW", "Rescue", "DM", "Instructor"
+  approxDivesLogged?: number;  // rough number
+
+  // GEAR / INTERESTS
+  cameraUser?: boolean;        // uses a camera / GoPro / Insta360
+  lovesPhotography?: boolean;
+  techCurious?: boolean;       // interested in tech/VR/AI
+
+  // MARKETING / FUNNEL
+  referralSource?: string;     // "Facebook", "Friend", "Dive shop", etc.
+  marketingOptIn?: boolean;
+
+  // SYSTEM METADATA
+  createdAt?: number;          // timestamp (ms)
+  lastActiveAt?: number;       // timestamp (ms)
+  lastPlatform?: "web" | "pwa" | "mobile-web" | "other";
 }
 
 export interface LimitReachedPayload {
@@ -165,7 +194,9 @@ export interface CommunitySighting {
   id: number | string; // Allow Firestore string IDs
   species: string;
   location: string;
+  region?: string; // Added for map filtering
   imageUrl?: string; // Added for map display
+  description?: string; // Added for map details
   createdAt: number;
 }
 

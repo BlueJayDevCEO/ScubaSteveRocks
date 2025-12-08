@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type, Chat, Modality, GenerateContentResponse, Part } from "@google/genai";
 import { IdentificationResult, ChatMessage, DiveSiteBriefingResult, GroundingChunk, LiveReportResult, DiveTripPlanResult, Briefing, User, ScubaNewsArticle, GameRound } from '../types';
 import i18n from './i18n';
+import { QUIZ_DATA } from '../data/quizData';
 
 // This is the main AI instance. In a production app, you would not expose
 // the API key on the client side.
@@ -42,6 +43,16 @@ async function callGenAIWithRetry<T>(
     }
     throw lastError;
 }
+
+// Helper to extract JSON from potentially chatty responses
+const extractJSONString = (text: string): string => {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+        return text.substring(start, end + 1);
+    }
+    return text;
+};
 
 const getLanguageInstruction = () => {
   const lang = i18n.language || 'en';
@@ -129,6 +140,59 @@ const CHAT_SYSTEM_PROMPT = `You are Scuba Steve, the ultimate AI Dive Buddy from
 3.  **SAFETY CRITICAL DISCLAIMER:** If the user asks for safety-critical content (decompression schedules, gas planning for technical dives, emergency procedures), you MUST start your response with this exact text:
     "This information is for general educational use only and must NEVER replace professional scuba training, dive planning software, or emergency protocols. Always follow your dive agency standards, your training level, and local regulations."
 4.  **INDEPENDENCE:** You are an independent AI assistant. Do NOT claim to be affiliated with PADI, SSI, NAUI, RAID, or DAN. If asked, state: "Scuba Steve is an independent digital product and is not affiliated with any scuba certification agency."
+
+--- GLOBAL SIGHTING MAP – STATIC DATA ---
+You have a fixed, curated set of demo community sightings. When a user asks about sightings in a specific region, or views the "Global Map", ALWAYS refer to these specific examples first. Do not invent new sightings.
+
+Each sighting has: Species, Location, Region, Description.
+
+--- CARIBBEAN ---
+1. Species: Caribbean Reef Shark | Location: Jardines de la Reina, Cuba | Desc: A sleek predator patrolling the healthy reef systems.
+2. Species: Hawksbill Turtle | Location: Cozumel, Mexico | Desc: Munching on sponges along the Palancar wall.
+
+--- RED SEA ---
+3. Species: Napoleon Wrasse | Location: Ras Mohammed, Egypt | Desc: A massive, friendly giant of the reef.
+4. Species: Spanish Dancer | Location: Dahab, Egypt | Desc: A vibrant nudibranch performing its dance in the blue.
+
+--- INDO-PACIFIC ---
+5. Species: Reef Manta Ray | Location: Komodo National Park, Indonesia | Desc: Gliding effortlessly through the cleaning station.
+6. Species: Clown Anemonefish | Location: Raja Ampat, Indonesia | Desc: Guarding its anemone home with vigor.
+
+--- MEDITERRANEAN ---
+7. Species: Mediterranean Monk Seal | Location: Zakynthos, Greece | Desc: One of the rarest marine mammals, spotted resting in a cave.
+8. Species: Loggerhead Turtle | Location: Kas, Turkey | Desc: Cruising the seagrass beds in the crystal clear water.
+
+--- SOUTH AFRICA ---
+9. Species: Great White Shark | Location: Gansbaai, South Africa | Desc: The apex predator in its natural element.
+10. Species: Ragged Tooth Shark | Location: Aliwal Shoal, South Africa | Desc: A toothy grin from this docile sand tiger shark.
+
+--- AUSTRALIA / GBR ---
+11. Species: Potato Cod | Location: Cod Hole, Great Barrier Reef | Desc: A curious giant grouper getting up close.
+12. Species: Green Sea Turtle | Location: Heron Island, Australia | Desc: Grazing peacefully on the reef flat.
+
+--- HAWAII ---
+13. Species: Reef Triggerfish | Location: Hanauma Bay, Hawaii | Desc: The famous Humuhumunukunukuapua'a.
+14. Species: Manta Ray | Location: Kona, Hawaii | Desc: Night feeding ballet under the lights.
+
+--- CALIFORNIA ---
+15. Species: Garibaldi | Location: Catalina Island, California | Desc: The bright orange state fish of California in the kelp forest.
+16. Species: Giant Sea Bass | Location: Channel Islands, California | Desc: A majestic encounter with the king of the kelp.
+
+--- FLORIDA ---
+17. Species: West Indian Manatee | Location: Crystal River, Florida | Desc: A gentle giant enjoying the warm springs.
+18. Species: Goliath Grouper | Location: Key Largo, Florida | Desc: Lurking in the shadows of the shipwreck.
+
+--- GALAPAGOS ---
+19. Species: Marine Iguana | Location: Isabela Island, Galapagos | Desc: The only lizard that swims in the ocean.
+20. Species: Scalloped Hammerhead | Location: Darwin's Arch, Galapagos | Desc: Schooling in the hundreds.
+
+--- ATLANTIC ---
+21. Species: Blue Shark | Location: Azores, Portugal | Desc: An inquisitive blue shark in the deep blue.
+22. Species: Atlantic Puffin | Location: Lundy Island, UK | Desc: Diving deep to catch sand eels.
+
+BEHAVIOR RULES:
+- When a user asks "What's being seen in the Red Sea?", look at this list and reply: "In the Red Sea, divers are seeing the massive Napoleon Wrasse at Ras Mohammed and the vibrant Spanish Dancer at Dahab!"
+- Do not make up sightings. Only use this list + whatever the user tells you in the current session.
 
 --- SHOP & PARTNER PRICING RULES ---
 If a user asks about pricing for dive shops, businesses, or "hiring Scuba Steve", you MUST quote these exact tiers:
@@ -263,37 +327,6 @@ The 'main_text' field MUST be a markdown string containing these sections with b
 - **Disclaimer**: "This information is AI-generated for educational purposes and may not be 100% accurate. Always consult a certified marine biologist or trusted ID guide for confirmation."
 `;
 
-const GAME_SYSTEM_PROMPT = `You are Scuba Steve, the AI dive training companion for the OSEA Diver App.
-Your job is to generate ONE single round for an interactive "Dive Training Game".
-
-GAME RULES:
-1. **Adapt to the User's Level:** 
-   - Level 1-5: Open Water (Basics).
-   - Level 6-15: Advanced/Rescue (Complex scenarios).
-   - Level 16-25: Divemaster/Instructor (Professional standards, leadership).
-2. **Focus on the selected Path:** Stick strictly to the requested topic (Marine Life, Safety, etc).
-3. **VARIETY IS CRITICAL:** Generate a UNIQUE, random scenario every time. Do not repeat common questions like "What is the sign for OK?". Create situational problems, environmental challenges, equipment failure scenarios, or specific species ID questions based on behavior. Mix up the difficulty.
-4. **Format:**
-   - Scenario: 1-3 sentences setting the scene.
-   - Options: 4 distinct choices (A, B, C, D).
-   - Correct Answer: The exact text of the correct option.
-   - Explanation: A short, fun, educational explanation of why the answer is correct.
-5. **Safety:** Refuse to give unsafe advice. Ensure correct answers follow PADI/SSI standards.
-
-OUTPUT:
-Return ONLY a valid JSON object matching this schema:
-{
-  "title": "Round Title",
-  "scenario": "Scenario text...",
-  "options": ["Option A", "Option B", "Option C", "Option D"],
-  "correct_answer": "The exact text of the correct option",
-  "explanation": "Why it is correct...",
-  "xp_reward": number (10-50),
-  "achievement_unlock": "Name or null (optional fun badge)",
-  "level_up": boolean (set to false by default)
-}
-`;
-
 const FUN_FACT_SYSTEM_PROMPT = `You are Scuba Steve, a friendly AI from OSEA Diver 🐠🌊. Provide a single, concise, and interesting fun fact about marine life. Keep it 1-2 sentences. Output only the fact string.`;
 
 const CHAT_GREETING_SYSTEM_PROMPT = `You are Scuba Steve. Generate a single, friendly opening line for a chat about a specific species identification. Do NOT ask questions. Just be enthusiastic.`;
@@ -306,12 +339,12 @@ const PARTNER_DEMO_SYSTEM_PROMPT = `You are a helpful, friendly AI assistant for
 Goal: Answer customer questions using the website info.
 Disclaimer: State you are an AI demo and users should contact the shop for official info.`;
 
-const SCUBA_NEWS_SYSTEM_PROMPT = `You are Scuba Steve, an AI Dive Buddy from OSEA Diver 📰🐠. Your task is to act as a news curator.
+const SCUBA_NEWS_SYSTEM_PROMPT = `You are a dedicated news aggregation bot for scuba diving.
 Use Google Search to find 10 recent, relevant scuba diving news articles (equipment, conservation, expeditions, travel).
 
-For each article, provide a title and summary.
+Your Output MUST be strictly valid JSON. Do not include any conversational text, greetings, or markdown code blocks outside the JSON.
 
-Your entire response MUST be a single, valid JSON object:
+Output schema:
 {
   "articles": [
     { "title": "...", "summary": "..." },
@@ -478,16 +511,9 @@ export async function searchSpecies(query: string): Promise<Pick<IdentificationR
   let result: any = {};
   try {
       let jsonStr = response.text?.trim() || "{}";
-      // Clean potential markdown code blocks
-      if (jsonStr.startsWith('```json')) {
-          jsonStr = jsonStr.substring(7);
-      } else if (jsonStr.startsWith('```')) {
-          jsonStr = jsonStr.substring(3);
-      }
-      if (jsonStr.endsWith('```')) {
-          jsonStr = jsonStr.substring(0, jsonStr.length - 3);
-      }
-      result = JSON.parse(jsonStr.trim());
+      // Use helper to extract JSON from markdown/chat
+      jsonStr = extractJSONString(jsonStr);
+      result = JSON.parse(jsonStr);
   } catch (e) {
       console.error("Failed to parse species search JSON", e);
   }
@@ -716,18 +742,9 @@ export async function getScubaNews(): Promise<ScubaNewsArticle[]> {
         },
     }));
 
-    // The model sometimes wraps the JSON in markdown code fences. We need to extract the raw JSON.
+    // Use helper to extract JSON from potentially chatty response
     let jsonString = response.text?.trim() || "";
-    if (jsonString.startsWith('```json')) {
-        jsonString = jsonString.substring(7);
-    } else if (jsonString.startsWith('```')) {
-        jsonString = jsonString.substring(3);
-    }
-    
-    if (jsonString.endsWith('```')) {
-        jsonString = jsonString.substring(0, jsonString.length - 3);
-    }
-    jsonString = jsonString.trim();
+    jsonString = extractJSONString(jsonString);
 
     try {
         const result = JSON.parse(jsonString);
@@ -756,35 +773,37 @@ export async function getScubaNews(): Promise<ScubaNewsArticle[]> {
     }
 }
 
+/**
+ * REPLACED AI GENERATION WITH STATIC LOCAL DATA
+ * This removes the expensive API call while maintaining the functionality.
+ */
 export async function playDiveGame(path: string, level: number): Promise<GameRound> {
-    const randomSeed = Math.random().toString(36).substring(2, 15);
-    const response = await callGenAIWithRetry<GenerateContentResponse>(() => ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Generate a game round for path: ${path}. Difficulty Level: ${level}.
-        Random Seed: ${randomSeed}.
-        CRITICAL: Generate a completely new and random scenario. Do not reuse common examples. Focus on different aspects of the topic than previous questions.`,
-        config: {
-            systemInstruction: GAME_SYSTEM_PROMPT + getLanguageInstruction(),
-            temperature: 1.0, // Max randomness
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    title: { type: Type.STRING },
-                    scenario: { type: Type.STRING },
-                    options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    correct_answer: { type: Type.STRING },
-                    explanation: { type: Type.STRING },
-                    xp_reward: { type: Type.NUMBER },
-                    achievement_unlock: { type: Type.STRING },
-                    level_up: { type: Type.BOOLEAN },
-                },
-                required: ["title", "scenario", "options", "correct_answer", "explanation", "xp_reward"]
-            },
-        },
-    }));
+    return new Promise((resolve, reject) => {
+        // Map labels to keys manually for precision
+        const keyMap: Record<string, string> = {
+            'marine life id': 'marine_life',
+            'safety & rescue': 'safety',
+            'equipment mastery': 'equipment',
+            'eco-diver': 'environment',
+            'hand signals': 'hand_signals',
+            'dive physics': 'physics'
+        };
 
-    return JSON.parse(response.text || "{}");
+        const normalizedPath = path.toLowerCase();
+        const key = keyMap[normalizedPath] || 'marine_life';
+        const questions = QUIZ_DATA[key] || QUIZ_DATA['marine_life'];
+        
+        // Simulate "Thinking" delay for UX
+        setTimeout(() => {
+            const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+            
+            if (!randomQuestion) {
+                reject(new Error("No questions available for this topic."));
+            } else {
+                resolve(randomQuestion);
+            }
+        }, 500);
+    });
 }
 
 

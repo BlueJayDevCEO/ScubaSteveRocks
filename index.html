@@ -2,7 +2,18 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- Cache Control: Ensure users always fetch the latest version -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <!-- iOS Native App Styling -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Scuba Steve">
+    
     <title>Scuba Steve AI™ (OSEA Diver™)</title>
     <meta property="og:title" content="Scuba Steve AI™ – Your AI Dive Buddy">
     <meta property="og:description" content="Chat, Marine ID, Surface Interval meals, dive tips. Free to try.">
@@ -10,16 +21,16 @@
     
     <!-- Favicon -->
     <link rel="icon" href="https://fonts.gstatic.com/s/e/notoemoji/latest/1f93f/512.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://fonts.gstatic.com/s/e/notoemoji/latest/1f93f/512.png">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind (Development only - Vite handles CSS in production, but keeping CDN for quick fallback if CSS build fails) -->
+    <!-- Tailwind (Fallback CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Tailwind config for runtime (if needed) or reference for build
       tailwind.config = {
         darkMode: 'class',
         theme: {
@@ -74,16 +85,16 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "i18next": "https://aistudiocdn.com/i18next@^25.6.3",
-    "react-i18next": "https://aistudiocdn.com/react-i18next@^16.3.5",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "i18next": "https://aistudiocdn.com/i18next@^25.7.2",
+    "react-i18next": "https://aistudiocdn.com/react-i18next@^16.4.0",
     "i18next-browser-languagedetector": "https://aistudiocdn.com/i18next-browser-languagedetector@^8.2.0",
     "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
     "fflate": "https://aistudiocdn.com/fflate@^0.8.2",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "vite": "https://aistudiocdn.com/vite@^7.2.7",
     "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
   }
 }

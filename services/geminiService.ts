@@ -6,7 +6,7 @@ import { QUIZ_DATA } from '../data/quizData';
 
 // This is the main AI instance. In a production app, you would not expose
 // the API key on the client side.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GOOGLE_GENAI });
 
 const identificationModel = 'gemini-2.5-flash'; // Switched to the faster model to reduce timeouts
 const fastModel = 'gemini-2.5-flash';
@@ -921,3 +921,5 @@ export async function decodeAudioData(
   }
   return buffer;
 }
+
+if (!import.meta.env.VITE_GOOGLE_GENAI) { throw new Error('Missing VITE_GOOGLE_GENAI'); }

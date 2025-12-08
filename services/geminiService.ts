@@ -1,14 +1,23 @@
 import { GoogleGenAI, Type, Chat, Modality, GenerateContentResponse, Part } from "@google/genai";
-import { IdentificationResult, ChatMessage, DiveSiteBriefingResult, GroundingChunk, LiveReportResult, DiveTripPlanResult, Briefing, User, ScubaNewsArticle, GameRound } from '../types';
+import {
+  IdentificationResult,
+  ChatMessage,
+  DiveSiteBriefingResult,
+  GroundingChunk,
+  LiveReportResult,
+  DiveTripPlanResult,
+  Briefing,
+  User,
+  ScubaNewsArticle,
+  GameRound
+} from '../types';
 import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
-// ---- GEMINI CLIENT ----
-// Uses Vite env var if present, otherwise falls back to hard-coded key.
+// --- Gemini client (Vercel env only) ---
 const ai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_GOOGLE_GENAI || "AIzaSyBjafa1vxBpvS5WoUfvjN8bvU4ow-kasyA",
+  apiKey: import.meta.env.VITE_GOOGLE_GENAI,
 });
-
 
 const identificationModel = 'gemini-2.5-flash';
 const fastModel = 'gemini-2.5-flash';

@@ -3,16 +3,15 @@ import { IdentificationResult, ChatMessage, DiveSiteBriefingResult, GroundingChu
 import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
-// This is the main AI instance. In a production app, you would not expose
-// the API key on the client side.
+// Hardcoded key to get the app running
 const ai = new GoogleGenAI({
   apiKey: "AIzaSyAP4uP-csHm5lVufGWAscK0lMgRgnQHJiw",
 });
 
-const identificationModel = 'gemini-2.5-flash'; // Switched to the faster model to reduce timeouts
+const identificationModel = 'gemini-2.5-flash';
 const fastModel = 'gemini-2.5-flash';
 const proModel = 'gemini-2.5-flash';
- 
+
 
 // Helper function for retrying API calls with exponential backoff
 async function callGenAIWithRetry<T>(

@@ -3,10 +3,12 @@ import { IdentificationResult, ChatMessage, DiveSiteBriefingResult, GroundingChu
 import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
-// Hardcoded key to get the app running
+// ---- GEMINI CLIENT ----
+// Uses Vite env var if present, otherwise falls back to hard-coded key.
 const ai = new GoogleGenAI({
-  apiKey: "AIzaSyAP4uP-csHm5lVufGWAscK0lMgRgnQHJiw",
+  apiKey: import.meta.env.VITE_GOOGLE_GENAI || "AIzaSyAP4uP-csHm5lVufGWAscK0lMgRgnQHJiw",
 });
+
 
 const identificationModel = 'gemini-2.5-flash';
 const fastModel = 'gemini-2.5-flash';

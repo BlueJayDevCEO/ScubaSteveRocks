@@ -13,7 +13,7 @@ import {
 import { getStorage, ref, uploadString, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDKguyjFe_Ij85o8E4heF-QtqNkeKlTkj4",
+  apiKey: "AIzaSyC-uj0wLBnsND_vjzmebSnSLYyq7CtiBe4",
   authDomain: "scubasteverocks-1b9a9.firebaseapp.com",
   projectId: "scubasteverocks-1b9a9",
   storageBucket: "scubasteverocks-1b9a9.firebasestorage.app",

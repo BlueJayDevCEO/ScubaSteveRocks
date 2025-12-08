@@ -6,7 +6,7 @@ import { QUIZ_DATA } from '../data/quizData';
 // ---- GEMINI CLIENT ----
 // Uses Vite env var if present, otherwise falls back to hard-coded key.
 const ai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_GOOGLE_GENAI || "AIzaSyAP4uP-csHm5lVufGWAscK0lMgRgnQHJiw",
+  apiKey: import.meta.env.VITE_GOOGLE_GENAI || "AIzaSyBjafa1vxBpvS5WoUfvjN8bvU4ow-kasyA",
 });
 
 

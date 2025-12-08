@@ -57,7 +57,7 @@ export const SimulationInfoModal: React.FC<SimulationInfoModalProps> = ({ onClos
                 </li>
                 <li><strong>Rules of Engagement:</strong>
                      <ul className="list-disc list-inside ml-4 mt-1">
-                        <li><strong>Winning:</strong> Maintain Air > 0 and Safety > 0 for ~12 turns. Perform a safety stop when prompted.</li>
+                        <li></li><strong>Winning:</strong> Maintain Air {'>'} 0 and Safety {'>'} 0 for ~12 turns. Perform a safety stop when prompted.
                         <li><strong>Losing:</strong> Running out of air or violating safety protocols results in a "Critical Failure".</li>
                         <li><strong>Aborting:</strong> It is always better to Abort (End Dive) than to die. You get a "Mission Incomplete" but keep your rank.</li>
                     </ul>

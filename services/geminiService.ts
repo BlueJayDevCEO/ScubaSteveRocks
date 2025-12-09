@@ -14,8 +14,9 @@ import {
 import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
-const genAI = new GoogleGenerativeAI({
-  apiKey: import.meta.env.VITE_GOOGLE_GENAI as string,
+// SINGLE Gemini client used everywhere
+const ai = new GoogleGenAI({
+apiKey: import.meta.env.VITE_GOOGLE_GENAI as string,
 });
 
 const identificationModel = 'gemini-2.5-flash';

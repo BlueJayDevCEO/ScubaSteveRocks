@@ -14,9 +14,8 @@ import {
 import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
-// --- Gemini client (Vercel env only) ---
-const ai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_GOOGLE_GENAI,
+const genAI = new GoogleGenerativeAI({
+  apiKey: import.meta.env.VITE_GOOGLE_GENAI as string,
 });
 
 const identificationModel = 'gemini-2.5-flash';

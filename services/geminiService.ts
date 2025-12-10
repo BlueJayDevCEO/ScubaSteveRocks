@@ -15,13 +15,19 @@ import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
 // SINGLE Gemini client used everywhere
-const ai = new GoogleGenAI({
-apiKey: import.meta.env.VITE_GOOGLE_GENAI as string,
+const apiKey = import.meta.env.VITE_GOOGLE_GENAI as string;
+
+if (!apiKey) {
+  console.error("⚠️ VITE_GOOGLE_GENAI is missing. Current import.meta.env =", import.meta.env);
+}
+
+export const ai = new GoogleGenAI({
+  apiKey,
 });
 
-const identificationModel = 'gemini-2.5-flash';
-const fastModel = 'gemini-2.5-flash';
-const proModel = 'gemini-2.5-flash';
+const identificationModel = "gemini-2.5-flash";
+const fastModel = "gemini-2.5-flash";
+const proModel = "gemini-2.5-flash";
 
 
 // Helper function for retrying API calls with exponential backoff

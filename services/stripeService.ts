@@ -6,7 +6,6 @@ import {
   doc 
 } from "firebase/firestore";
 import { db } from "../lib/firebase";  // adjust the path if stripeService is elsewhere
-import { getAuth } from "firebase/auth";
 
 // ACTUAL STRIPE PRICE IDs (Test Mode)
 const STRIPE_PRICE_IDS = {

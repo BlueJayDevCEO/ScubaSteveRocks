@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAI_Blob } from '@google/genai';
+import { LiveServerMessage, Modality, Blob as GenAI_Blob } from '@google/genai';
 import { AppContext } from '../App';
-import { encode, decode, decodeAudioData, LIVE_CHAT_SYSTEM_PROMPT } from '../services/geminiService';
+import { ai, encode, decode, decodeAudioData, LIVE_CHAT_SYSTEM_PROMPT } from '../services/geminiService';
 import { incrementUserBriefingCount, getUser } from '../services/userService';
 import { saveBriefing, updateBriefing } from '../services/jobService';
 import { LiveChatMessage, User, Briefing } from '../types';
@@ -53,7 +52,6 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
         transcriptRef.current = transcript;
     }, [transcript]);
 
-    const aiRef = useRef<GoogleGenAI | null>(null);
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const inputAudioContextRef = useRef<AudioContext | null>(null);
     const outputAudioContextRef = useRef<AudioContext | null>(null);
@@ -99,11 +97,11 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
     }, [setBriefings]);
 
     useEffect(() => {
-        aiRef.current = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        return () => {
-            handleStop(); // Cleanup on component unmount
-        };
+    return () => {
+        handleStop(); // Cleanup on component unmount
+    };
     }, [handleStop]);
+
 
     const handleStart = useCallback(async () => {
         if (isBriefingLimitReached) {
@@ -146,7 +144,7 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
             nextStartTimeRef.current = 0;
             audioSourcesRef.current = new Set();
             
-            const sessionPromise = aiRef.current!.live.connect({
+            const sessionPromise = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 callbacks: {
                     onopen: () => {

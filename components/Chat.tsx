@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Chat as GeminiChat } from '@google/genai';
+// GenAI is server-only. Client calls our API instead.
 import { createScubaSteveChat } from '../services/geminiService';
 import { getChatHistory, addChatMessage } from '../services/chatService';
 import { incrementUserBriefingCount, canUserPerformBriefing, getUser } from '../services/userService';

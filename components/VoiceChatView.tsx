@@ -4,9 +4,9 @@ import { AppContext } from '../App';
 import { ai, encode, decode, decodeAudioData, LIVE_CHAT_SYSTEM_PROMPT } from '../services/geminiService';
 import { incrementUserBriefingCount, getUser } from '../services/userService';
 import { saveBriefing, updateBriefing } from '../services/jobService';
-import { LiveChatMessage, User, Briefing } from '../types';
+import { LiveChatMessage, Briefing } from '../types';
 
-const SESSION_DURATION_SECONDS = 180; // 3 minutes per session
+const SESSION_DURATION_SECONDS = 180;
 
 type SessionStatus = 'idle' | 'connecting' | 'connected' | 'error' | 'ended';
 
@@ -31,7 +31,11 @@ const TranscriptBubble: React.FC<{ message: LiveChatMessage }> = ({ message }) =
     );
 };
 
-export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitReached, onOpenLimitModal, currentBriefingResult }) => {
+export const VoiceChatView: React.FC<VoiceChatViewProps> = ({
+    isBriefingLimitReached,
+    onOpenLimitModal,
+    currentBriefingResult
+}) => {
     const [status, _setStatus] = useState<SessionStatus>('idle');
     const [transcript, setTranscript] = useState<LiveChatMessage[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -63,14 +67,15 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
     const currentBriefingIdRef = useRef<number | null>(null);
 
     const handleStop = useCallback(() => {
+        console.log("🛑 Stopping session...");
         if (usageIntervalRef.current) {
             clearInterval(usageIntervalRef.current);
             usageIntervalRef.current = null;
         }
-        
+
         mediaStreamRef.current?.getTracks().forEach(track => track.stop());
         scriptProcessorRef.current?.disconnect();
-        
+
         if (inputAudioContextRef.current && inputAudioContextRef.current.state !== 'closed') {
             inputAudioContextRef.current.close().catch(console.error);
         }
@@ -78,7 +83,9 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
             outputAudioContextRef.current.close().catch(console.error);
         }
 
-        sessionPromiseRef.current?.then(session => session.close()).catch(console.error);
+        sessionPromiseRef.current
+            ?.then(session => session.close())
+            .catch(console.error);
 
         if (currentBriefingIdRef.current) {
             const finalTranscript = transcriptRef.current;
@@ -88,28 +95,28 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
                 output: { transcript: finalTranscript }
             };
             updateBriefing(briefingToUpdate as Briefing);
-            setBriefings(prev => prev.map(j => (j.id === briefingToUpdate.id ? { ...j, ...briefingToUpdate } : j)));
+            setBriefings(prev =>
+                prev.map(j => (j.id === briefingToUpdate.id ? { ...j, ...briefingToUpdate } : j))
+            );
             currentBriefingIdRef.current = null;
         }
 
         setStatus('ended');
-
     }, [setBriefings]);
 
+    // Cleanup on unmount
     useEffect(() => {
-    return () => {
-        handleStop(); // Cleanup on component unmount
-    };
+        return () => handleStop();
     }, [handleStop]);
 
-
     const handleStart = useCallback(async () => {
+        console.log("🎙 Starting voice chat session...");
         if (isBriefingLimitReached) {
             onOpenLimitModal();
-            setError("You've reached your weekly voice chat limit. Please try again next week.");
+            setError("You've reached your weekly voice chat limit.");
             return;
         }
-        
+
         setStatus('connecting');
         setError(null);
         setTranscript([]);
@@ -126,183 +133,185 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
             createdAt: Date.now(),
             input: { prompt: 'Voice Chat Session' }
         };
+
         currentBriefingIdRef.current = newBriefing.id;
         saveBriefing(newBriefing);
         setBriefings(prev => [newBriefing, ...prev]);
 
-        let stream: MediaStream;
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaStreamRef.current = stream;
 
-            inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-            outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            
-            if (inputAudioContextRef.current.state === 'suspended') await inputAudioContextRef.current.resume();
-            if (outputAudioContextRef.current.state === 'suspended') await outputAudioContextRef.current.resume();
+            inputAudioContextRef.current = new AudioContext({ sampleRate: 16000 });
+            outputAudioContextRef.current = new AudioContext({ sampleRate: 24000 });
 
-            nextStartTimeRef.current = 0;
-            audioSourcesRef.current = new Set();
-            
+            if (inputAudioContextRef.current.state === 'suspended')
+                await inputAudioContextRef.current.resume();
+            if (outputAudioContextRef.current.state === 'suspended')
+                await outputAudioContextRef.current.resume();
+
             const sessionPromise = ai.live.connect({
-                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+                model: "gemini-2.5-flash-native-audio-preview-09-2025",
                 callbacks: {
                     onopen: () => {
-                        try {
-                            if (statusRef.current !== 'connecting') {
-                                return;
-                            }
-                            if (!stream || !stream.active) {
-                                setError("The microphone stream was interrupted.");
-                                handleStop();
-                                return;
-                            }
-
-                            setStatus('connected');
-                            setRemainingSeconds(SESSION_DURATION_SECONDS);
-
-                            usageIntervalRef.current = window.setInterval(() => {
-                                setRemainingSeconds(prev => {
-                                    const newRemaining = prev - 1;
-                                    if (newRemaining <= 0) {
-                                        handleStop();
-                                        return 0;
-                                    }
-                                    return newRemaining;
-                                });
-                            }, 1000);
-
-                            const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
-                            const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-                            scriptProcessorRef.current = scriptProcessor;
-
-                            scriptProcessor.onaudioprocess = (event) => {
-                                const inputData = event.inputBuffer.getChannelData(0);
-                                const l = inputData.length;
-                                const int16 = new Int16Array(l);
-                                for (let i = 0; i < l; i++) {
-                                    int16[i] = inputData[i] * 32768;
-                                }
-                                const pcmBlob: GenAI_Blob = {
-                                    data: encode(new Uint8Array(int16.buffer)),
-                                    mimeType: 'audio/pcm;rate=16000',
-                                };
-                                sessionPromiseRef.current?.then(session => session.sendRealtimeInput({ media: pcmBlob }));
-                            };
-                            source.connect(scriptProcessor);
-                            scriptProcessor.connect(inputAudioContextRef.current!.destination);
-                        } catch (e) {
-                            setError("Failed to connect your microphone.");
+                        console.log("✅ Live session OPENED");
+                        if (!stream.active) {
+                            setError("Microphone lost.");
                             handleStop();
+                            return;
                         }
-                    },
-                    onmessage: async (message: LiveServerMessage) => {
-                        setTranscript(prev => {
-                            const newTranscript = [...prev];
-                            let lastMessage = newTranscript[newTranscript.length - 1];
 
-                            if (message.serverContent?.inputTranscription) {
-                                const text = message.serverContent.inputTranscription.text;
-                                if (lastMessage?.role === 'user') lastMessage.text += text;
-                                else newTranscript.push({ role: 'user', text });
-                            } else if (message.serverContent?.outputTranscription) {
-                                const text = message.serverContent.outputTranscription.text;
-                                if (lastMessage?.role === 'model') lastMessage.text += text;
-                                else newTranscript.push({ role: 'model', text });
+                        setStatus('connected');
+                        setRemainingSeconds(SESSION_DURATION_SECONDS);
+
+                        usageIntervalRef.current = window.setInterval(() => {
+                            setRemainingSeconds(prev => {
+                                if (prev <= 1) {
+                                    handleStop();
+                                    return 0;
+                                }
+                                return prev - 1;
+                            });
+                        }, 1000);
+
+                        const source = inputAudioContextRef.current.createMediaStreamSource(stream);
+                        const processor = inputAudioContextRef.current.createScriptProcessor(4096, 1, 1);
+
+                        scriptProcessorRef.current = processor;
+
+                        processor.onaudioprocess = (event) => {
+                            const inputData = event.inputBuffer.getChannelData(0);
+                            const int16 = new Int16Array(inputData.length);
+                            for (let i = 0; i < inputData.length; i++) {
+                                int16[i] = inputData[i] * 32768;
                             }
-                            return newTranscript;
-                        });
+                            const pcmBlob: GenAI_Blob = {
+                                data: encode(new Uint8Array(int16.buffer)),
+                                mimeType: 'audio/pcm;rate=16000',
+                            };
+                            sessionPromiseRef.current?.then(session =>
+                                session.sendRealtimeInput({ media: pcmBlob })
+                            );
+                        };
 
-                        const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+                        source.connect(processor);
+                        processor.connect(inputAudioContextRef.current.destination);
+                    },
+
+                    onmessage: async (msg: LiveServerMessage) => {
+                        console.log("📩 Live message:", msg);
+
+                        const inputT = msg.serverContent?.inputTranscription?.text;
+                        const outputT = msg.serverContent?.outputTranscription?.text;
+
+                        if (inputT || outputT) {
+                            setTranscript(prev => [
+                                ...prev,
+                                {
+                                    role: inputT ? 'user' : 'model',
+                                    text: inputT || outputT
+                                }
+                            ]);
+                        }
+
+                        const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                         if (audioData) {
                             const outputCtx = outputAudioContextRef.current!;
-                            nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputCtx.currentTime);
-                            const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1);
+                            const audioBuffer = await decodeAudioData(
+                                decode(audioData),
+                                outputCtx,
+                                24000,
+                                1
+                            );
+
                             const source = outputCtx.createBufferSource();
                             source.buffer = audioBuffer;
                             source.connect(outputCtx.destination);
-                            source.addEventListener('ended', () => audioSourcesRef.current.delete(source));
-                            source.start(nextStartTimeRef.current);
-                            nextStartTimeRef.current += audioBuffer.duration;
-                            audioSourcesRef.current.add(source);
-                        }
-
-                         if (message.serverContent?.interrupted) {
-                            for (const source of audioSourcesRef.current.values()) source.stop();
-                            audioSourcesRef.current.clear();
-                            nextStartTimeRef.current = 0;
+                            source.start();
                         }
                     },
+
                     onerror: (e) => {
-                        setError('A connection error occurred.');
+                        console.error("❌ Live session error:", e);
+                        setError("A connection error occurred.");
                         handleStop();
                     },
+
                     onclose: () => {
+                        console.log("🔚 Live session CLOSED");
                         if (statusRef.current !== 'ended') handleStop();
                     },
                 },
+
                 config: {
                     systemInstruction: LIVE_CHAT_SYSTEM_PROMPT,
                     responseModalities: [Modality.AUDIO],
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
                     speechConfig: {
-                        voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } },
-                    },
-                },
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
+                    }
+                }
             });
-            sessionPromiseRef.current = sessionPromise;
 
+            sessionPromiseRef.current = sessionPromise;
         } catch (err) {
-            let errorMessage = "Could not start voice chat.";
-            if ((err as Error).name === 'NotAllowedError') {
-                errorMessage = "Microphone access required.";
-            }
-            setError(errorMessage);
+            console.error("❌ handleStart error:", err);
+            setError("Could not start voice chat.");
             setStatus('error');
+
             if (currentBriefingIdRef.current) {
-                const failedBriefing: Partial<Briefing> = { id: currentBriefingIdRef.current, status: 'failed' };
-                updateBriefing(failedBriefing as Briefing);
-                setBriefings(prev => prev.map(j => (j.id === failedBriefing.id ? { ...j, ...failedBriefing } : j)));
+                const failed: Partial<Briefing> = { id: currentBriefingIdRef.current, status: 'failed' };
+                updateBriefing(failed as Briefing);
+                setBriefings(prev => prev.map(j =>
+                    j.id === failed.id ? { ...j, ...failed } : j
+                ));
                 currentBriefingIdRef.current = null;
             }
         }
-    }, [user.uid, handleStop, isBriefingLimitReached, onOpenLimitModal, setUser, setBriefings]);
+    }, [isBriefingLimitReached, onOpenLimitModal, setUser, setBriefings, user.uid, handleStop]);
+
 
     const formatTime = (totalSeconds: number) => {
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s
+            .toString()
+            .padStart(2, '0')}`;
     };
 
     const renderContent = () => {
-        if (currentBriefingResult && currentBriefingResult.type === 'voice') {
-            const pastTranscript = currentBriefingResult.output?.transcript || [];
+        if (currentBriefingResult?.type === 'voice') {
             return (
-                <div className="w-full h-full flex flex-col animate-fade-in">
-                    <div className="flex-1 p-4 overflow-y-auto bg-light-bg/30 dark:bg-dark-bg/30">
-                        {pastTranscript.length > 0 ? (
-                            pastTranscript.map((msg, index) => <TranscriptBubble key={index} message={msg} />)
-                        ) : (
-                            <div className="text-center text-light-text/70 dark:text-dark-text/70 h-full flex items-center justify-center">
-                                <p className="text-xl">No transcript was saved for this session.</p>
-                            </div>
-                        )}
-                    </div>
+                <div className="flex-1 p-4 overflow-y-auto">
+                    {currentBriefingResult.output?.transcript?.length ? (
+                        currentBriefingResult.output.transcript.map((m, i) => (
+                            <TranscriptBubble key={i} message={m} />
+                        ))
+                    ) : (
+                        <p className="text-center opacity-70">No transcript was saved.</p>
+                    )}
                 </div>
-            )
+            );
         }
-        
-        if (status === 'idle' || status === 'ended' || status === 'error') {
+
+        if (['idle', 'ended', 'error'].includes(status)) {
             return (
-                <div className="text-center flex flex-col items-center justify-center h-full animate-fade-in">
-                    <h2 className="font-heading font-semibold text-2xl sm:text-3xl mb-4">Real-time Voice Chat</h2>
-                    <p className="text-xl max-w-lg mb-8 text-light-text/80 dark:text-dark-text/80">
-                        Have a natural, voice-to-voice conversation with Scuba Steve.
-                    </p>
-                    {error && <p className="text-red-500 bg-red-100 dark:bg-red-900/30 p-3 rounded-lg mb-6">{error}</p>}
-                    <button onClick={handleStart} disabled={isBriefingLimitReached} className="bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-2xl py-4 px-8 rounded-full hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20 flex items-center justify-center gap-3 disabled:from-gray-400 disabled:to-gray-500 disabled:text-gray-200 disabled:shadow-none disabled:cursor-not-allowed">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                    <h2 className="text-3xl font-heading mb-4">Real-time Voice Chat</h2>
+                    <p className="opacity-75 mb-6">Talk naturally with Scuba Steve.</p>
+
+                    {error && (
+                        <p className="text-red-500 bg-red-100 dark:bg-red-900/30 p-3 rounded mb-4">
+                            {error}
+                        </p>
+                    )}
+
+                    <button
+                        onClick={handleStart}
+                        disabled={isBriefingLimitReached}
+                        className="bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white text-xl px-8 py-4 rounded-full shadow-lg"
+                    >
                         {isBriefingLimitReached ? 'Weekly Limit Reached' : 'Talk to Scuba Steve'}
                     </button>
                 </div>
@@ -310,51 +319,49 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
         }
 
         return (
-            <div className="w-full h-full flex flex-col animate-fade-in">
-                <div className="flex-shrink-0 flex items-center justify-between p-4 bg-light-bg/50 dark:bg-dark-bg/50 rounded-t-lg">
+            <div className="flex flex-col h-full">
+                <div className="flex items-center justify-between p-4 bg-light-bg/50 dark:bg-dark-bg/50 rounded-t-lg">
                     <div className="flex items-center gap-3">
-                        {/* Animated Live Indicator */}
                         <div className="relative flex h-4 w-4">
-                          {status === 'connected' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
-                          <span className={`relative inline-flex rounded-full h-4 w-4 ${status === 'connected' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                            {status === 'connected' && (
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            )}
+                            <span
+                                className={`relative inline-flex rounded-full h-4 w-4 ${
+                                    status === 'connected' ? 'bg-green-500' : 'bg-yellow-500'
+                                }`}
+                            ></span>
                         </div>
-                        <span className="font-semibold text-lg">{status === 'connecting' ? 'Connecting...' : 'Live Conversation'}</span>
+                        <span>{status === 'connecting' ? 'Connecting...' : 'Live Conversation'}</span>
                     </div>
-                    <div className="font-mono text-lg font-semibold text-light-text dark:text-dark-text">{formatTime(remainingSeconds)}</div>
-                    <button onClick={handleStop} className="bg-red-500/10 text-red-500 font-bold py-2 px-4 rounded-lg hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2">
+
+                    <span className="font-mono text-lg">
+                        {formatTime(remainingSeconds)}
+                    </span>
+
+                    <button
+                        onClick={handleStop}
+                        className="text-red-500 py-2 px-4 rounded-lg hover:bg-red-500/10"
+                    >
                         Stop
                     </button>
                 </div>
-                
-                {/* Audio Visualizer Simulation */}
-                {status === 'connected' && (
-                    <div className="h-16 flex items-center justify-center gap-1 bg-gradient-to-b from-light-bg/50 to-transparent dark:from-dark-bg/50">
-                        {[...Array(5)].map((_, i) => (
-                             <div key={i} className="w-2 bg-light-accent dark:bg-dark-accent rounded-full animate-[pulse_1s_ease-in-out_infinite]" style={{ height: '40%', animationDelay: `${i * 0.15}s` }}></div>
-                        ))}
-                    </div>
-                )}
 
-                <div className="flex-1 p-4 overflow-y-auto bg-light-bg/30 dark:bg-dark-bg/30">
-                    {transcript.length === 0 && (
-                        <div className="text-center text-light-text/70 dark:text-dark-text/70 h-full flex flex-col items-center justify-center gap-4">
-                            <p className="text-xl animate-pulse">Listening...</p>
-                        </div>
+                <div className="p-4 overflow-y-auto flex-1">
+                    {transcript.length === 0 ? (
+                        <p className="opacity-70 text-center animate-pulse">Listening...</p>
+                    ) : (
+                        transcript.map((msg, i) => <TranscriptBubble key={i} message={msg} />)
                     )}
-                    {transcript.map((msg, index) => (
-                        <TranscriptBubble key={index} message={msg} />
-                    ))}
                 </div>
             </div>
         );
     };
 
-    const isHistoricalView = currentBriefingResult && currentBriefingResult.type === 'voice';
-    const shellMinHeight = isHistoricalView ? 'auto' : 'min-h-[60vh]';
-
     return (
-        <section className={`bg-light-card dark:bg-dark-card rounded-2xl shadow-soft dark:shadow-soft-dark p-8 w-full ${shellMinHeight} flex flex-col`}>
+        <section className="bg-light-card dark:bg-dark-card rounded-2xl shadow-soft dark:shadow-soft-dark p-8 w-full min-h-[60vh]">
             {renderContent()}
         </section>
     );
 };
+

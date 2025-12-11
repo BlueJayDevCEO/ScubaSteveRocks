@@ -5,6 +5,7 @@ import {
   onSnapshot, 
   doc 
 } from "firebase/firestore";
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";  // adjust the path if stripeService is elsewhere
 
 // ACTUAL STRIPE PRICE IDs (Test Mode)

@@ -14,24 +14,29 @@ import {
 import i18n from './i18n';
 import { QUIZ_DATA } from '../data/quizData';
 
-// SINGLE Gemini client used everywhere
-const apiKey = import.meta.env.VITE_GOOGLE_GENAI as string | undefined;
+// ---------------------------------------------------------
+// 1️⃣ GET THE API KEY
+// ---------------------------------------------------------
+const apiKey = import.meta.env.VITE_GOOGLE_GENAI;
 
 if (!apiKey) {
-  console.error("⚠️ VITE_GOOGLE_GENAI is NOT set. import.meta.env = ", import.meta.env);
-  // Optional: throw so you see it immediately
-  // throw new Error("VITE_GOOGLE_GENAI is missing");
+  console.error("❌ Missing VITE_GOOGLE_GENAI. import.meta.env =", import.meta.env);
+  throw new Error("VITE_GOOGLE_GENAI is missing in .env or Vercel settings");
 }
 
+// ---------------------------------------------------------
+// 2️⃣ CREATE ONE SINGLE CLIENT ONLY
+// ---------------------------------------------------------
 export const ai = new GoogleGenAI({
-  apiKey: apiKey as string,
+  apiKey
 });
 
+// ---------------------------------------------------------
+// 3️⃣ YOUR MODELS BELOW
+// ---------------------------------------------------------
 const identificationModel = "gemini-2.5-flash";
 const fastModel = "gemini-2.5-flash";
 const proModel = "gemini-2.5-flash";
-
-
 
 // Helper function for retrying API calls with exponential backoff
 async function callGenAIWithRetry<T>(

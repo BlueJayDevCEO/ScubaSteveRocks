@@ -57,7 +57,7 @@ export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({ onClose })
             disabled={isLoading}
             className="w-full block text-center bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-xl py-3 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-light-accent/20 dark:shadow-dark-accent/20 disabled:opacity-50"
           >
-            {isLoading ? 'Connecting to Stripe...' : 'Upgrade to Pro ($9.99/mo) 👑'}
+            {isLoading ? 'Connecting to Stripe...' : 'Upgrade to Pro ($3.99/mo) 👑'}
           </button>
           <button 
             onClick={() => {

@@ -561,7 +561,13 @@ const App: React.FC = () => {
             onOpenCredits={() => setShowCreditDetails(true)}
         />
 
-        {activeView === 'home' && <Hero />}
+        {activeView === 'home' && (
+       <>
+           <Hero />
+         <GoogleEligibilitySections />
+            </>
+           )}
+
 
         <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 mb-20">
             {activeView === 'home' && (

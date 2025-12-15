@@ -10,7 +10,7 @@ import { db } from "../lib/firebase";  // adjust the path if stripeService is el
 
 // ACTUAL STRIPE PRICE IDs (Test Mode)
 const STRIPE_PRICE_IDS = {
-    // Scuba Steve Pro ($9.99/mo) - derived from your link price_1SbeO9L3mNCUAVdPPmmf4AQ4
+    // Scuba Steve Pro ($3.99/mo) - derived from your link price_1SbeO9L3mNCUAVdPPmmf4AQ4
     SUBSCRIPTION_MONTHLY: "price_1SbeO9L3mNCUAVdPPmmf4AQ4", 
     // One-Time Donation - derived from your link price_1SbeQoL3mNCUAVdPEcfWzvIL
     DONATION_ONETIME: "price_1SbeQoL3mNCUAVdPEcfWzvIL"     

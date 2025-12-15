@@ -166,7 +166,7 @@ const SightingMapView: React.FC = () => {
                                                 You are viewing the top {DISPLAY_LIMIT} recent sightings. Upgrade to Pro to access the full history of over {sightings.length} sightings in this region.
                                             </p>
                                             <a 
-                                                href="https://buy.stripe.com/price_1SeVjoL3mNCUAVdPh9wXdJoNe"
+                                                href="https://buy.stripe.com/price_1sbeO9L3mNCUAVdPpmmf4AQ4"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-block bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-2 px-6 rounded-lg hover:scale-105 transition-transform shadow-lg"

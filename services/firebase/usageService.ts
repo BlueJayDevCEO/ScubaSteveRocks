@@ -1,5 +1,5 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "./config";
+import { db, auth } from "../lib/firebase"; // <-- use your real firebase file
 
 export type UsageEventType =
   | "open_feature"
@@ -23,23 +23,20 @@ export type UsageEventType =
  * @param details Optional object containing extra metadata.
  */
 export async function logUsageEvent(
-  uid: string | null,
   type: UsageEventType,
   details?: Record<string, any>
 ) {
-  // Don't log if offline/guest or mock user
-  if (!uid || uid === 'mock-demo-user' || uid.startsWith('guest-')) return;
+  const uid = auth.currentUser?.uid;
+
+  if (!uid || uid === "mock-demo-user" || uid.startsWith("guest-")) return;
 
   try {
-    // Save to the specific user's sub-collection
-    // This matches the new firestore.rules structure
     await addDoc(collection(db, "users", uid, "activity_logs"), {
       type,
       details: details ?? {},
       createdAt: serverTimestamp(),
     });
   } catch (e) {
-    // Fail silently to avoid interrupting the user experience
     console.warn("[UsageService] Failed to log event:", e);
   }
 }

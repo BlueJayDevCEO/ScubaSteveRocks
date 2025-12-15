@@ -2,14 +2,13 @@ import { getAuth } from "firebase/auth";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import type { Analytics } from "firebase/analytics";
-import { 
-  initializeFirestore, 
-  persistentLocalCache, 
-  persistentMultipleTabManager,
-  getDocs, 
-  collection, 
-  query, 
-  limit 
+import {
+  getFirestore,
+  enableIndexedDbPersistence,
+  getDocs,
+  collection,
+  query,
+  limit,
 } from "firebase/firestore";
 import { getStorage, ref, uploadString, deleteObject } from "firebase/storage";
 
@@ -27,14 +26,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Initialize Firestore with robust settings for unstable networks
-// 'experimentalForceLongPolling' fixes the "Could not reach backend" error on restricted networks
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  }),
-  experimentalForceLongPolling: true, 
+const db = getFirestore(app);
+
+enableIndexedDbPersistence(db).catch(() => {
+  // ignore (multi-tab / blocked storage / etc.)
 });
+
 
 const storage = getStorage(app);
 

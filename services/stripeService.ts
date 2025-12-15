@@ -1,5 +1,7 @@
 import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";  // adjust the path if stripeService is elsewhere
+console.log("STRIPE PRICE USED:", STRIPE_PRICE_IDS.SUBSCRIPTION_MONTHLY);
+
 
 // ACTUAL STRIPE PRICE IDs (Test Mode)
 const STRIPE_PRICE_IDS = {

@@ -93,5 +93,5 @@ export const checkStorageConnection = async (userId: string | undefined): Promis
     }
 };
 
-export { db, auth, app };
+export { db, auth, app, storage };
 

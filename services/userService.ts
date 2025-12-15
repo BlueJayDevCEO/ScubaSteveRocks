@@ -1,4 +1,4 @@
-
+import { auth } from './firebase/config'; // wherever you initialize getAuth()
 import { User, GameProgress, SavedSite } from '../types';
 import { seedInitialBriefings } from './jobService';
 import { seedInitialChat } from './chatService';
@@ -28,33 +28,32 @@ const STANDARD_ACTIONS = ['marine_id', 'color_correct', 'chat', 'surface_interva
 
 // --- FIREBASE SYNC HELPER ---
 const syncUserToFirestore = async (user: User) => {
-    // Don't sync offline/demo users or guests
-    if (!user || user.uid === 'mock-demo-user' || user.uid.startsWith('guest-')) return;
-    
-    try {
-        const userRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(userRef);
+  if (!user) return;
 
-        const now = serverTimestamp();
+  const isGuest =
+    user.uid === 'mock-demo-user' ||
+    user.uid.startsWith('guest-') ||
+    user.email === 'scubasteve@scubasteve.rocks';
 
-        if (!snap.exists()) {
-            // First time seeing this user in Firestore
-            await setDoc(userRef, {
-                ...user,
-                createdAt: now,
-                lastActiveAt: now
-            });
-        } else {
-            // Update existing user, merging new fields but preserving existing createdAt
-            await setDoc(userRef, {
-                ...user,
-                lastActiveAt: now
-            }, { merge: true });
-        }
-        // console.log(`[Firestore] Synced user profile for ${user.displayName}`);
-    } catch (e) {
-        console.error("[Firestore] Failed to sync user profile:", e);
+  if (isGuest) return;
+
+  // ✅ Must be signed in, and must be the same user
+  if (!auth.currentUser) return;
+  if (auth.currentUser.uid !== user.uid) return;
+
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    const snap = await getDoc(userRef);
+    const now = serverTimestamp();
+
+    if (!snap.exists()) {
+      await setDoc(userRef, { ...user, createdAt: now, lastActiveAt: now });
+    } else {
+      await setDoc(userRef, { ...user, lastActiveAt: now }, { merge: true });
     }
+  } catch (e) {
+    console.error("[Firestore] Failed to sync user profile:", e);
+  }
 };
 
 /**

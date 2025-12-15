@@ -1,71 +1,46 @@
 import { collection, addDoc, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";  // adjust the path if stripeService is elsewhere
-console.log("STRIPE PRICE USED:", STRIPE_PRICE_IDS.SUBSCRIPTION_MONTHLY);
+import { db } from "./firebase/config";
 
-
-// ACTUAL STRIPE PRICE IDs (Test Mode)
 const STRIPE_PRICE_IDS = {
-  SUBSCRIPTION_MONTHLY: "price_1SeVjoL3mNCUAVdPh9wXdJoN",
-  DONATION_ONETIME: "price_1SbeQoL3mNCUAVdPEcfWzvIL"
-};
+  SUBSCRIPTION_MONTHLY: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY,
+  DONATION_ONETIME: import.meta.env.VITE_STRIPE_PRICE_DONATION_5,
+} as const;
 
-/**
- * Starts a Stripe Checkout session by creating a doc in Firestore.
- * The Firebase Extension listens to this, talks to Stripe, and returns a URL.
- */
-export async function createCheckoutSession(uid: string, type: 'subscription' | 'donation'): Promise<void> {
+function getPriceId(type: "subscription" | "donation") {
+  const priceId =
+    type === "subscription"
+      ? STRIPE_PRICE_IDS.SUBSCRIPTION_MONTHLY
+      : STRIPE_PRICE_IDS.DONATION_ONETIME;
+
+  if (!priceId) throw new Error(`Missing Stripe price env var for ${type}`);
+  return priceId;
+}
+
+export async function createCheckoutSession(uid: string, type: "subscription" | "donation") {
   if (!uid) throw new Error("User must be logged in");
 
-  const priceId = type === 'subscription' 
-    ? STRIPE_PRICE_IDS.SUBSCRIPTION_MONTHLY 
-    : STRIPE_PRICE_IDS.DONATION_ONETIME;
+  const priceId = getPriceId(type);
+  const mode = type === "subscription" ? "subscription" : "payment";
 
-  const mode = type === 'subscription' ? 'subscription' : 'payment';
-
-  // 1. Create a doc in customers/{uid}/checkout_sessions
-  // The Firebase Extension watches this collection
   const collectionRef = collection(db, "customers", uid, "checkout_sessions");
-  
+
   const docRef = await addDoc(collectionRef, {
     price: priceId,
     success_url: window.location.origin,
     cancel_url: window.location.origin,
-    mode: mode, 
+    mode,
   });
 
-  // 2. Listen for the Extension to attach the 'url' or 'error'
   onSnapshot(docRef, (snap) => {
-    const { error, url } = snap.data() as { error?: { message: string }, url?: string } || {};
-    
-    if (error) {
-      console.error("Stripe Error:", error.message);
-      alert(`Payment Error: ${error.message}`);
+    const data = snap.data() as { error?: { message: string }; url?: string } | undefined;
+    if (!data) return;
+
+    if (data.error?.message) {
+      console.error("Stripe Error:", data.error.message);
+      alert(`Payment Error: ${data.error.message}`);
+      return;
     }
-    
-    if (url) {
-      // 3. Redirect the user to Stripe
-      window.location.assign(url);
-    }
+
+    if (data.url) window.location.assign(data.url);
   });
-}
-
-/**
- * Setup a listener for the user's subscription status.
- * Returns an unsubscribe function.
- */
-export function listenForSubscription(uid: string, callback: (isPro: boolean) => void) {
-    const subsRef = collection(db, "customers", uid, "subscriptions");
-    
-    // Listen to the active subscriptions
-    const unsubscribe = onSnapshot(subsRef, (snapshot) => {
-        // Check if any doc has status 'active' or 'trialing'
-        const hasActiveSub = snapshot.docs.some(doc => {
-            const data = doc.data();
-            return data.status === 'active' || data.status === 'trialing';
-        });
-        
-        callback(hasActiveSub);
-    });
-
-    return unsubscribe;
 }

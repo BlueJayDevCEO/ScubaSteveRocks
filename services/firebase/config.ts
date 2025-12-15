@@ -1,3 +1,4 @@
+import { getAuth } from "firebase/auth";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import type { Analytics } from "firebase/analytics";
@@ -24,6 +25,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 // Initialize Firestore with robust settings for unstable networks
 // 'experimentalForceLongPolling' fixes the "Could not reach backend" error on restricted networks
@@ -91,4 +93,4 @@ export const checkStorageConnection = async (userId: string | undefined): Promis
     }
 };
 
-export { app, analytics, db, storage };
+export { app, analytics, db, storage, auth };

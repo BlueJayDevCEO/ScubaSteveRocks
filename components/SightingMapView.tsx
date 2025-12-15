@@ -17,7 +17,7 @@ const SightingMapView: React.FC = () => {
     const user = context?.user;
     
     // FREE USER LIMIT
-    const DISPLAY_LIMIT = 10;
+    const DISPLAY_LIMIT = 50;
     const isPro = user?.isPro || false;
 
     const handleRegionSelect = useCallback(async (region: string) => {

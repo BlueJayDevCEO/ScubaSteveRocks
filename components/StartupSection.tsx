@@ -29,9 +29,9 @@ export default function StartupSection() {
           from any device.
         </p>
 
-        <div className="my-8 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+        <div className="my-8 h-px bg-gradient-to-r from-transparent via-white-400/60 to-transparent" />
 
-        <h3 className="mt-8 text-xl font-bold text-cyan-300">
+        <h3 className="mt-8 text-xl font-bold text-white-300">
           Business description
         </h3>
         <p className="mt-2 text-white/85 leading-relaxed">
@@ -41,7 +41,7 @@ export default function StartupSection() {
           globally.
         </p>
 
-        <h3 className="mt-8 text-xl font-bold text-cyan-300">
+        <h3 className="mt-8 text-xl font-bold text-white-300">
           What problem we solve
         </h3>
         <p className="mt-2 text-white/85 leading-relaxed">
@@ -51,7 +51,7 @@ export default function StartupSection() {
           educational diving.
         </p>
 
-        <h3 className="mt-8 text-xl font-bold text-cyan-300">Product</h3>
+        <h3 className="mt-8 text-xl font-bold text-white-300">Product</h3>
         <ul className="mt-3 list-disc pl-6 space-y-2 text-white/85">
           <li>AI marine life identification (from underwater photos)</li>
           <li>Underwater photo color correction</li>
@@ -62,7 +62,7 @@ export default function StartupSection() {
           </li>
         </ul>
 
-        <h3 className="mt-8 text-xl font-bold text-cyan-300">Team</h3>
+        <h3 className="mt-8 text-xl font-bold text-white-300">Team</h3>
         <p className="mt-2 text-white/85 leading-relaxed">
           <strong className="text-white">
             Founder: Jarryd-Leigh van der Colff (Blue Jay)
@@ -72,7 +72,7 @@ export default function StartupSection() {
           global diving community.
         </p>
 
-        <h3 className="mt-8 text-xl font-bold text-cyan-300">Current stage</h3>
+        <h3 className="mt-8 text-xl font-bold text-white-300">Current stage</h3>
         <p className="mt-2 text-white/85 leading-relaxed">
           Scuba Steve AI is in active development with a live web demo and early
           user testing. Core features are live, and the platform is being
@@ -86,9 +86,9 @@ export default function StartupSection() {
             rel="noreferrer"
             className="
               px-5 py-3 rounded-xl font-semibold
-              bg-cyan-500/20 hover:bg-cyan-500/30
+              bg-cyan-500/20 hover:bg-white-500/30
               text-white
-              border border-cyan-300/30
+              border border-white-300/30
               transition-colors
               shadow
             "

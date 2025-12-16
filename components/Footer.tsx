@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { AppContext } from '../App';
+import React, { useContext } from "react";
+import { AppContext } from "../App";
 
 interface FooterProps {
   onOpenTerms: () => void;
@@ -9,6 +9,16 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) => {
   const context = useContext(AppContext);
   const brandLogo = context?.config?.logoUrl;
+
+  const scrollToStartup = () => {
+    const el = document.getElementById("startup");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // fallback: ensure hash is set
+      window.location.hash = "startup";
+    }
+  };
 
   return (
     <footer className="w-full mt-20 pb-32 sm:pb-16">
@@ -33,12 +43,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
         {/* Links */}
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap justify-center">
 
-          <a
-            href="#startup"
+          <button
+            onClick={scrollToStartup}
             className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
           >
             Startup / About
-          </a>
+          </button>
 
           <a
             href="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"

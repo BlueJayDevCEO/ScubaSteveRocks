@@ -11,7 +11,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
     const brandLogo = context?.config?.logoUrl;
 
     return (
-        <footer className="w-full mt-16 pb-20 sm:pb-8">
+        <footer className="w-full mt-16 pb-28 sm:pb-12">
             <div className="w-full max-w-5xl mx-auto border-t border-black/10 dark:border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-light-text/70 dark:text-dark-text/70">
                 <div className="flex items-center gap-3">
                     {brandLogo ? (
@@ -28,7 +28,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
                     </p>
                 </div>
                 <div className="flex items-center gap-x-6 gap-y-2 flex-wrap justify-center">
-                    <a href="#startup" className="hover:underline font-semibold">Startup / About</a>
+                    <a href="#startup" className="hover:underline font-bold text-light-text dark:text-dark-text">
+                      Startup / About
+                        </a>
                     <button onClick={onOpenTerms} className="hover:underline">Terms of Use</button>
                     <button onClick={onOpenPrivacy} className="hover:underline">Privacy Policy</button>
                     <a href="mailto:scubasteve@scubasteve.rocks" className="hover:underline">Contact</a>

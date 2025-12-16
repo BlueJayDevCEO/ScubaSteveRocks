@@ -1,4 +1,4 @@
-
+import StartupSection from './components/StartupSection';
 import React, { useState, useEffect, createContext } from 'react';
 import { User, Briefing, AppConfig } from './types';
 import { listenForSubscription } from './services/stripeService';
@@ -561,6 +561,7 @@ const App: React.FC = () => {
         />
 
         {activeView === 'home' && <Hero />}
+        {activeView === 'home' && <StartupSection />}
 
         <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 mb-20">
             {activeView === 'home' && (

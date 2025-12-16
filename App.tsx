@@ -1,5 +1,5 @@
-import StartupSection from './components/StartupSection';
 import React, { useState, useEffect, createContext } from 'react';
+import StartupSection from './components/StartupSection';
 import { User, Briefing, AppConfig } from './types';
 import { listenForSubscription } from './services/stripeService';
 import { LoginPage } from './components/LoginPage';
@@ -518,25 +518,53 @@ const App: React.FC = () => {
   const currentBgUrl = BACKGROUNDS.find(b => b.id === backgroundId)?.url || BACKGROUNDS[0].url;
 
   if (!user) {
-      return (
-          <>
-            <GlobalStyles />
-            <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
-            {showLegalAcceptance && (
-                <LegalAcceptanceModal 
-                    onAccept={() => {
-                        setShowLegalAcceptance(false);
-                        localStorage.setItem('scubaSteveLegalAccepted', 'true');
-                    }}
-                    onOpenTerms={() => setShowLegal('terms')}
-                    onOpenPrivacy={() => setShowLegal('privacy')}
-                />
-            )}
-            {showLegal === 'terms' && <LegalModal title="Terms of Use" onClose={() => setShowLegal(null)}><TermsOfUseContent /></LegalModal>}
-            {showLegal === 'privacy' && <LegalModal title="Privacy Policy" onClose={() => setShowLegal(null)}><PrivacyPolicyContent /></LegalModal>}
-          </>
-      );
-  }
+  return (
+    <>
+      <GlobalStyles />
+      <GlobalLoader isLoading={isLoading} config={config || undefined} />
+
+      <div className="min-h-screen text-light-text dark:text-dark-text font-sans transition-colors duration-300 flex flex-col relative overflow-x-hidden">
+        <Hero />
+
+        {/* Login block (keeps app usable) */}
+        <div className="w-full max-w-md mx-auto px-4 py-8">
+          <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
+        </div>
+
+        {/* Google eligibility content */}
+        <StartupSection />
+
+        <Footer
+          onOpenTerms={() => setShowLegal('terms')}
+          onOpenPrivacy={() => setShowLegal('privacy')}
+        />
+      </div>
+
+      {showLegalAcceptance && (
+        <LegalAcceptanceModal
+          onAccept={() => {
+            setShowLegalAcceptance(false);
+            localStorage.setItem('scubaSteveLegalAccepted', 'true');
+          }}
+          onOpenTerms={() => setShowLegal('terms')}
+          onOpenPrivacy={() => setShowLegal('privacy')}
+        />
+      )}
+
+      {showLegal === 'terms' && (
+        <LegalModal title="Terms of Use" onClose={() => setShowLegal(null)}>
+          <TermsOfUseContent />
+        </LegalModal>
+      )}
+
+      {showLegal === 'privacy' && (
+        <LegalModal title="Privacy Policy" onClose={() => setShowLegal(null)}>
+          <PrivacyPolicyContent />
+        </LegalModal>
+      )}
+    </>
+  );
+}
 
   return (
     <AppContext.Provider value={{ user, setUser, theme, setTheme, backgroundId, setBackgroundId, briefings, setBriefings, config }}>
@@ -561,7 +589,6 @@ const App: React.FC = () => {
         />
 
         {activeView === 'home' && <Hero />}
-        {activeView === 'home' && <StartupSection />}
 
         <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 mb-20">
             {activeView === 'home' && (

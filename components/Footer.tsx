@@ -28,7 +28,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
                     </p>
                 </div>
                 <div className="flex items-center gap-x-6 gap-y-2 flex-wrap justify-center">
-                    <a href="#startup" className="hover:underline font-bold text-light-text dark:text-dark-text">
+                   <a
+                      href="#startup"
+                      className="font-bold underline text-black dark:text-white"
+                    >
                       Startup / About
                         </a>
                     <button onClick={onOpenTerms} className="hover:underline">Terms of Use</button>

@@ -527,6 +527,22 @@ const App: React.FC = () => {
       <div className="min-h-screen text-light-text dark:text-dark-text font-sans transition-colors duration-300 flex flex-col relative overflow-x-hidden">
         <Hero />
 
+        {/* 🔥 Demo video stays public for Google */}
+        <div className="w-full max-w-5xl mx-auto px-4 py-10">
+          <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+            <video
+              src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full h-auto"
+            />
+          </div>
+          <p className="mt-3 text-center text-sm text-light-text/70 dark:text-dark-text/70">
+            Live product demo — Marine ID, dive assistance, and photo correction.
+          </p>
+        </div>
+
         {/* Login block (keeps app usable) */}
         <div className="w-full max-w-md mx-auto px-4 py-8">
           <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
@@ -540,32 +556,10 @@ const App: React.FC = () => {
           onOpenPrivacy={() => setShowLegal('privacy')}
         />
       </div>
-
-      {showLegalAcceptance && (
-        <LegalAcceptanceModal
-          onAccept={() => {
-            setShowLegalAcceptance(false);
-            localStorage.setItem('scubaSteveLegalAccepted', 'true');
-          }}
-          onOpenTerms={() => setShowLegal('terms')}
-          onOpenPrivacy={() => setShowLegal('privacy')}
-        />
-      )}
-
-      {showLegal === 'terms' && (
-        <LegalModal title="Terms of Use" onClose={() => setShowLegal(null)}>
-          <TermsOfUseContent />
-        </LegalModal>
-      )}
-
-      {showLegal === 'privacy' && (
-        <LegalModal title="Privacy Policy" onClose={() => setShowLegal(null)}>
-          <PrivacyPolicyContent />
-        </LegalModal>
-      )}
     </>
   );
 }
+
 
   return (
     <AppContext.Provider value={{ user, setUser, theme, setTheme, backgroundId, setBackgroundId, briefings, setBriefings, config }}>

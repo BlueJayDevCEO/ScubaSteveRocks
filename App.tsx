@@ -1,3 +1,4 @@
+import { DemoVideo } from "./components/DemoVideo";
 import React, { useState, useEffect, createContext } from 'react';
 import StartupSection from './components/StartupSection';
 import { User, Briefing, AppConfig } from './types';

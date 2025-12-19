@@ -667,71 +667,106 @@ const App: React.FC = () => {
   const currentBgUrl =
     BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url;
 
-  /* ------------------ PUBLIC (NO USER) ------------------ */
-  if (!user) {
-    return (
-      <>
-        <GlobalStyles />
-        <GlobalLoader isLoading={isLoading} config={config || undefined} />
+/* ------------------ PUBLIC (NO USER) ------------------ */
+if (!user) {
+  return (
+    <>
+      <GlobalStyles />
+      <GlobalLoader isLoading={isLoading} config={config || undefined} />
 
-        <div className="min-h-screen text-light-text dark:text-dark-text font-sans transition-colors duration-300 flex flex-col relative overflow-x-hidden">
-          <Hero />
+      {/* ✅ SEO for the public landing */}
+      {/* Put this import at top: import { SEOHead } from './components/SEOHead'; */}
+      <SEOHead />
 
-          {/* 🔥 Demo video stays public for Google */}
-          <div className="w-full max-w-5xl mx-auto px-4 py-10">
-            <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black">
-              <video
-                src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full h-auto"
-              />
+      <div className="min-h-screen text-light-text dark:text-dark-text font-sans transition-colors duration-300 flex flex-col relative overflow-x-hidden">
+        {/* ✅ Give public landing the SAME premium ocean background */}
+        <div
+          className="living-ocean-bg fixed inset-0 z-0"
+          style={{
+            backgroundImage: `url('${
+              BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url
+            }')`,
+          }}
+        />
+        <div className="relative z-10">
+          <Hero onSecondaryClick={() => {
+            const el = document.getElementById("demo");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }} />
+
+          {/* ✅ Demo Section (anchor target) */}
+          <section id="demo" className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+            <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black/40 backdrop-blur-md">
+              <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-white">Live Demo</div>
+                  <div className="text-xs text-white/60">
+                    Marine ID • Photo Fix • Dive Assistance
+                  </div>
+                </div>
+                <div className="text-xs text-white/60">scubasteve.rocks</div>
+              </div>
+
+              <div className="bg-black">
+                <video
+                  src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-auto"
+                />
+              </div>
             </div>
-            <p className="mt-3 text-center text-sm text-light-text/70 dark:text-dark-text/70">
-              Live product demo — Marine ID, dive assistance, and photo correction.
+
+            <p className="mt-3 text-center text-sm text-white/70">
+              Built by real divers. Works on mobile. No credit card required to try.
             </p>
-          </div>
+          </section>
 
-          {/* Login block (keeps app usable) */}
-          <div className="w-full max-w-md mx-auto px-4 py-8">
-            <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
-          </div>
+          {/* ✅ Login */}
+          <section id="try" className="w-full max-w-md mx-auto px-4 pb-10">
+            <div className="glass-panel rounded-3xl border border-white/10 bg-black/30 backdrop-blur-md p-5 sm:p-6 shadow-2xl">
+              <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
+            </div>
+          </section>
 
-          {/* Google eligibility content */}
-          <StartupSection />
+          {/* ✅ Google eligibility content stays visible */}
+          <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+            <StartupSection />
+          </section>
 
           <Footer
-            onOpenTerms={() => setShowLegal('terms')}
-            onOpenPrivacy={() => setShowLegal('privacy')}
+            onOpenTerms={() => setShowLegal("terms")}
+            onOpenPrivacy={() => setShowLegal("privacy")}
           />
 
           {/* Legal acceptance (public) */}
           {showLegalAcceptance && (
             <LegalAcceptanceModal
               onAccept={() => {
-                localStorage.setItem('scubaSteveLegalAccepted', 'true');
+                localStorage.setItem("scubaSteveLegalAccepted", "true");
                 setShowLegalAcceptance(false);
               }}
-              onViewTerms={() => setShowLegal('terms')}
-              onViewPrivacy={() => setShowLegal('privacy')}
+              onViewTerms={() => setShowLegal("terms")}
+              onViewPrivacy={() => setShowLegal("privacy")}
             />
           )}
 
-          {showLegal === 'terms' && (
+          {showLegal === "terms" && (
             <LegalModal title="Terms of Use" onClose={() => setShowLegal(null)}>
               <TermsOfUseContent />
             </LegalModal>
           )}
-          {showLegal === 'privacy' && (
+          {showLegal === "privacy" && (
             <LegalModal title="Privacy Policy" onClose={() => setShowLegal(null)}>
               <PrivacyPolicyContent />
             </LegalModal>
           )}
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
+}
 
   /* ------------------ AUTHED APP ------------------ */
   return (

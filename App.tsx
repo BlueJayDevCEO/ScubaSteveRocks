@@ -1,6 +1,7 @@
 // App.tsx
 import React, { useState, useEffect, createContext } from "react";
 import StartupSection from "./components/StartupSection";
+import SEOHead from "./components/SEOHead";
 import { User, Briefing, AppConfig } from "./types";
 import { listenForSubscription } from "./services/stripeService";
 import { LoginPage } from "./components/LoginPage";

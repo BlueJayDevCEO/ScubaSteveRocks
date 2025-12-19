@@ -7,7 +7,7 @@ type SEOHeadProps = {
   canonicalUrl?: string;
 };
 
-export const SEOHead: React.FC<SEOHeadProps> = ({
+const SEOHead: React.FC<SEOHeadProps> = ({
   title = "Scuba Steve AI — Your AI Dive Buddy",
   description = "Identify marine life from photos, plan safer dives, and fix underwater colors — instantly. Built by divers for divers.",
   canonicalUrl = "https://www.scubasteve.rocks/",
@@ -50,3 +50,4 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   );
 };
 
+export default SEOHead;

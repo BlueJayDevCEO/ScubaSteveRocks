@@ -1,7 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback, useContext } from "react";
 import { LiveServerMessage, Modality, Blob as GenAI_Blob } from "@google/genai";
 import { AppContext } from "../App";
-import { ai, encode, decode, decodeAudioData, LIVE_CHAT_SYSTEM_PROMPT } from "../services/geminiService";
+import {
+  ai,
+  encode,
+  decode,
+  decodeAudioData,
+  LIVE_CHAT_SYSTEM_PROMPT,
+} from "../services/geminiService";
 import { incrementUserBriefingCount, getUser } from "../services/userService";
 import { saveBriefing, updateBriefing } from "../services/jobService";
 import { LiveChatMessage, Briefing } from "../types";
@@ -30,7 +36,11 @@ const TranscriptBubble: React.FC<{ message: LiveChatMessage }> = ({ message }) =
   );
 };
 
-export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitReached, onOpenLimitModal, currentBriefingResult }) => {
+export const VoiceChatView: React.FC<VoiceChatViewProps> = ({
+  isBriefingLimitReached,
+  onOpenLimitModal,
+  currentBriefingResult,
+}) => {
   const [status, _setStatus] = useState<SessionStatus>("idle");
   const [transcript, setTranscript] = useState<LiveChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +51,9 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
   const { user, setUser, setBriefings } = context;
 
   const statusRef = useRef<SessionStatus>("idle");
+  const stoppingRef = useRef(false);
+  const mountedRef = useRef(true);
+
   const setStatus = (s: SessionStatus) => {
     statusRef.current = s;
     _setStatus(s);
@@ -51,7 +64,15 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
     transcriptRef.current = transcript;
   }, [transcript]);
 
-  const sessionPromiseRef = useRef<Promise<any> | null>(null);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Session + audio refs
+  const sessionRef = useRef<any>(null); // resolved live session
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
@@ -59,31 +80,54 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
   const usageIntervalRef = useRef<number | null>(null);
   const currentBriefingIdRef = useRef<number | null>(null);
 
+  const safeSetError = (msg: string | null) => {
+    if (!mountedRef.current) return;
+    setError(msg);
+  };
+
+  const safeSetTranscript = (fn: (prev: LiveChatMessage[]) => LiveChatMessage[]) => {
+    if (!mountedRef.current) return;
+    setTranscript(fn);
+  };
+
   const handleStop = useCallback(() => {
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
+
+    // stop timer
     if (usageIntervalRef.current) {
       clearInterval(usageIntervalRef.current);
       usageIntervalRef.current = null;
     }
 
+    // stop mic
     mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
     mediaStreamRef.current = null;
 
-    scriptProcessorRef.current?.disconnect();
+    // disconnect processor
+    try {
+      scriptProcessorRef.current?.disconnect();
+    } catch {}
     scriptProcessorRef.current = null;
 
+    // close audio contexts
     if (inputAudioContextRef.current && inputAudioContextRef.current.state !== "closed") {
-      inputAudioContextRef.current.close().catch(console.error);
+      inputAudioContextRef.current.close().catch(() => {});
     }
     inputAudioContextRef.current = null;
 
     if (outputAudioContextRef.current && outputAudioContextRef.current.state !== "closed") {
-      outputAudioContextRef.current.close().catch(console.error);
+      outputAudioContextRef.current.close().catch(() => {});
     }
     outputAudioContextRef.current = null;
 
-    sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
-    sessionPromiseRef.current = null;
+    // close live session
+    try {
+      sessionRef.current?.close?.();
+    } catch {}
+    sessionRef.current = null;
 
+    // finalize briefing transcript
     if (currentBriefingIdRef.current) {
       const finalTranscript = transcriptRef.current;
       const briefingToUpdate: Partial<Briefing> = {
@@ -92,11 +136,14 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
         output: { transcript: finalTranscript },
       };
       updateBriefing(briefingToUpdate as Briefing);
-      setBriefings((prev) => prev.map((j) => (j.id === briefingToUpdate.id ? { ...j, ...briefingToUpdate } : j)));
+      setBriefings((prev) =>
+        prev.map((j) => (j.id === briefingToUpdate.id ? { ...j, ...briefingToUpdate } : j))
+      );
       currentBriefingIdRef.current = null;
     }
 
     setStatus("ended");
+    stoppingRef.current = false;
   }, [setBriefings]);
 
   useEffect(() => () => handleStop(), [handleStop]);
@@ -104,18 +151,23 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
   const handleStart = useCallback(async () => {
     if (isBriefingLimitReached) {
       onOpenLimitModal();
-      setError("You've reached your weekly voice chat limit.");
+      safeSetError("You've reached your weekly voice chat limit.");
       return;
     }
 
     setStatus("connecting");
-    setError(null);
+    safeSetError(null);
     setTranscript([]);
     setRemainingSeconds(SESSION_DURATION_SECONDS);
 
-    incrementUserBriefingCount(user.uid, "voice");
-    const updatedUser = getUser(user.uid);
-    if (updatedUser) setUser(updatedUser);
+    // optimistic usage increment (don’t let failures break start)
+    try {
+      await Promise.resolve(incrementUserBriefingCount(user.uid, "voice"));
+      const updatedUser = await Promise.resolve(getUser(user.uid));
+      if (updatedUser) setUser(updatedUser);
+    } catch {
+      // ignore — voice can still start
+    }
 
     const newBriefing: Briefing = {
       id: Date.now(),
@@ -140,18 +192,29 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
       if (inputAudioContextRef.current.state === "suspended") await inputAudioContextRef.current.resume();
       if (outputAudioContextRef.current.state === "suspended") await outputAudioContextRef.current.resume();
 
+      // connect live
       const sessionPromise = ai.live.connect({
         model: "gemini-2.5-flash-native-audio-preview-09-2025",
         callbacks: {
-          onopen: () => {
-            if (!stream.active) {
-              setError("Microphone lost.");
+          onopen: async () => {
+            if (!mediaStreamRef.current?.active) {
+              safeSetError("Microphone lost.");
               handleStop();
               return;
             }
 
             setStatus("connected");
 
+            // resolve session once (no per-frame .then spam)
+            try {
+              sessionRef.current = await sessionPromise;
+            } catch {
+              safeSetError("Could not establish session.");
+              handleStop();
+              return;
+            }
+
+            // countdown
             usageIntervalRef.current = window.setInterval(() => {
               setRemainingSeconds((prev) => {
                 if (prev <= 1) {
@@ -162,21 +225,35 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
               });
             }, 1000);
 
-            const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
+            // mic -> processor
+            const source = inputAudioContextRef.current!.createMediaStreamSource(mediaStreamRef.current!);
             const processor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = processor;
 
             processor.onaudioprocess = (event) => {
+              const session = sessionRef.current;
+              const streamOk = mediaStreamRef.current?.active;
+              const ctxOk = inputAudioContextRef.current && inputAudioContextRef.current.state !== "closed";
+              if (!session || !streamOk || !ctxOk) return;
+
               const inputData = event.inputBuffer.getChannelData(0);
               const int16 = new Int16Array(inputData.length);
-              for (let i = 0; i < inputData.length; i++) int16[i] = Math.max(-1, Math.min(1, inputData[i])) * 32767;
+
+              for (let i = 0; i < inputData.length; i++) {
+                const s = Math.max(-1, Math.min(1, inputData[i]));
+                int16[i] = Math.round(s * 32767);
+              }
 
               const pcmBlob: GenAI_Blob = {
                 data: encode(new Uint8Array(int16.buffer)),
                 mimeType: "audio/pcm;rate=16000",
               };
 
-              sessionPromiseRef.current?.then((session) => session.sendRealtimeInput({ media: pcmBlob }));
+              try {
+                session.sendRealtimeInput({ media: pcmBlob });
+              } catch {
+                // if send fails, let onerror/onclose handle it
+              }
             };
 
             source.connect(processor);
@@ -187,22 +264,27 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
             const inputT = msg.serverContent?.inputTranscription?.text;
             const outputT = msg.serverContent?.outputTranscription?.text;
 
-            if (inputT) setTranscript((prev) => [...prev, { role: "user", text: inputT }]);
-            if (outputT) setTranscript((prev) => [...prev, { role: "model", text: outputT }]);
+            if (inputT) safeSetTranscript((prev) => [...prev, { role: "user", text: inputT }]);
+            if (outputT) safeSetTranscript((prev) => [...prev, { role: "model", text: outputT }]);
 
+            // audio out (sometimes parts can vary; guard hard)
             const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (audioData && outputAudioContextRef.current) {
-              const outputCtx = outputAudioContextRef.current;
-              const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1);
-              const src = outputCtx.createBufferSource();
-              src.buffer = audioBuffer;
-              src.connect(outputCtx.destination);
-              src.start();
+              try {
+                const outputCtx = outputAudioContextRef.current;
+                const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1);
+                const src = outputCtx.createBufferSource();
+                src.buffer = audioBuffer;
+                src.connect(outputCtx.destination);
+                src.start();
+              } catch {
+                // ignore audio decode errors
+              }
             }
           },
 
           onerror: () => {
-            setError("A connection error occurred.");
+            safeSetError("A connection error occurred.");
             handleStop();
           },
 
@@ -215,34 +297,46 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
           responseModalities: [Modality.AUDIO],
           inputAudioTranscription: {},
           outputAudioTranscription: {},
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } } },
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
+          },
         },
       });
 
-      sessionPromiseRef.current = sessionPromise;
+      // kick off promise
+      // (sessionRef is assigned in onopen after awaiting this)
+      void sessionPromise;
     } catch (err) {
       console.error(err);
-      setError("Could not start voice chat.");
+      safeSetError("Could not start voice chat.");
       setStatus("error");
 
       if (currentBriefingIdRef.current) {
         const failed: Partial<Briefing> = { id: currentBriefingIdRef.current, status: "failed" };
         updateBriefing(failed as Briefing);
-        setBriefings((prev) => prev.map((j) => (j.id === failed.id ? { ...j, ...failed } : j)));
+        setBriefings((prev) =>
+          prev.map((j) => (j.id === failed.id ? { ...j, ...failed } : j))
+        );
         currentBriefingIdRef.current = null;
       }
     }
   }, [isBriefingLimitReached, onOpenLimitModal, setUser, setBriefings, user.uid, handleStop]);
 
-  const formatTime = (t: number) => `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  const formatTime = (t: number) =>
+    `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 
+  // Read-only transcript view for saved briefings
   if (currentBriefingResult?.type === "voice") {
     return (
       <section className="bg-light-card dark:bg-dark-card rounded-2xl shadow-soft dark:shadow-soft-dark p-8 w-full min-h-[60vh]">
         <div className="flex-1 p-4 overflow-y-auto">
-          {currentBriefingResult.output?.transcript?.length
-            ? currentBriefingResult.output.transcript.map((m: any, i: number) => <TranscriptBubble key={i} message={m} />)
-            : <p className="text-center opacity-70">No transcript was saved.</p>}
+          {currentBriefingResult.output?.transcript?.length ? (
+            currentBriefingResult.output.transcript.map((m: any, i: number) => (
+              <TranscriptBubble key={i} message={m} />
+            ))
+          ) : (
+            <p className="text-center opacity-70">No transcript was saved.</p>
+          )}
         </div>
       </section>
     );
@@ -255,12 +349,16 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
           <h2 className="text-3xl font-heading mb-4">Real-time Voice Chat</h2>
           <p className="opacity-75 mb-6">Talk naturally with Scuba Steve.</p>
 
-          {error && <p className="text-red-500 bg-red-100 dark:bg-red-900/30 p-3 rounded mb-4">{error}</p>}
+          {error && (
+            <p className="text-red-500 bg-red-100 dark:bg-red-900/30 p-3 rounded mb-4">
+              {error}
+            </p>
+          )}
 
           <button
             onClick={handleStart}
             disabled={isBriefingLimitReached}
-            className="bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white text-xl px-8 py-4 rounded-full shadow-lg"
+            className="bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white text-xl px-8 py-4 rounded-full shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isBriefingLimitReached ? "Weekly Limit Reached" : "Talk to Scuba Steve"}
           </button>
@@ -272,7 +370,10 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ isBriefingLimitRea
               <span>{status === "connecting" ? "Connecting..." : "Live Conversation"}</span>
             </div>
             <span className="font-mono text-lg">{formatTime(remainingSeconds)}</span>
-            <button onClick={handleStop} className="text-red-500 py-2 px-4 rounded-lg hover:bg-red-500/10">
+            <button
+              onClick={handleStop}
+              className="text-red-500 py-2 px-4 rounded-lg hover:bg-red-500/10"
+            >
               Stop
             </button>
           </div>

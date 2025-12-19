@@ -67,9 +67,12 @@ export const Header: React.FC<HeaderProps> = ({
                 src={config?.avatarUrl}
               />
 
-              <h1 className="font-heading font-bold text-lg sm:text-xl lg:text-2xl text-gradient-primary hidden sm:block tracking-tight drop-shadow">
+              <div
+                className="font-heading font-bold text-lg sm:text-xl lg:text-2xl text-gradient-primary hidden sm:block tracking-tight drop-shadow"
+                aria-label="Scuba Steve AI"
+                >
                 Scuba Steve AI™
-              </h1>
+              </div>
             </button>
           </div>
 

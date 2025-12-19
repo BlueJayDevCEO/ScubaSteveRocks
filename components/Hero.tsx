@@ -9,21 +9,22 @@ type HeroProps = {
 export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) => {
   const { t } = useTranslation();
 
-  const scrollToDemo = () => {
-    const el = document.getElementById("demo");
+  const scrollToId = (id: string) => {
+    const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    else window.location.hash = `#${id}`; // fallback
   };
 
   const handlePrimary = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onPrimaryClick) onPrimaryClick();
-    else scrollToDemo(); // fallback
+    else scrollToId('try'); // fallback
   };
 
   const handleSecondary = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onSecondaryClick) onSecondaryClick();
-    else scrollToDemo();
+    else scrollToId('demo');
   };
 
   return (

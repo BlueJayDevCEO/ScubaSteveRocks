@@ -84,53 +84,27 @@ export default function StartupSection() {
           expanded with additional AI tools and subscription tiers.
         </p>
 
-        {/* CTA + Demo Video */}
-        <div className="mt-10 flex flex-col gap-6">
-          <div className="flex flex-wrap gap-4">
-            <a
-              href="https://scubasteve.rocks"
-              target="_blank"
-              rel="noreferrer"
-              className="
-                px-6 py-3 rounded-xl font-semibold
-                bg-cyan-500/25 hover:bg-cyan-500/40
-                text-white
-                border border-cyan-300/40
-                transition-colors
-                shadow-lg
-              "
-            >
-              Open Live Demo
-            </a>
-
-            <a
-              href="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
-              target="_blank"
-              rel="noreferrer"
-              className="
-                px-6 py-3 rounded-xl font-semibold
-                bg-white/10 hover:bg-white/20
-                text-white
-                border border-white/30
-                transition-colors
-                shadow-lg
-              "
-            >
-              ▶ Watch Demo Video
-            </a>
-          </div>
-
-          <video
-            src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
-            controls
-            preload="metadata"
+        {/* Single CTA (keep it clean) */}
+        <div className="mt-10 flex flex-wrap gap-4">
+          <a
+            href="https://scubasteve.rocks"
+            target="_blank"
+            rel="noreferrer"
             className="
-              w-full max-w-3xl rounded-2xl
-              border border-white/20
-              shadow-xl
-              bg-black/40
+              px-6 py-3 rounded-xl font-semibold
+              bg-cyan-500/25 hover:bg-cyan-500/40
+              text-white
+              border border-cyan-300/40
+              transition-colors
+              shadow-lg
             "
-          />
+          >
+            Open Live Demo
+          </a>
+
+          <p className="text-sm text-white/60 self-center">
+            Demo video is available in the footer.
+          </p>
         </div>
       </div>
     </section>

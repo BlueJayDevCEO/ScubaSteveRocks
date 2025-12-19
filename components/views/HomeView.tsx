@@ -17,19 +17,23 @@ interface HomeViewProps {
  * Update ONLY these values (one place) and every button will work.
  */
 const VIEW_KEYS = {
+  home: 'home',
   chat: 'chat',
   identify: 'identify',
   logbook: 'logbook',
   game: 'game',
 
-  // likely keys (adjust if your App.tsx uses different names)
   tools: 'tools',
-  colorCorrection: 'colorCorrection',
-  diveSiteLookup: 'diveSiteLookup',
-  tripPlanner: 'tripPlanner',
-  sightings: 'sightings',
+  tripPlanner: 'trip_planner',
+  diveSiteLookup: 'dive_site_lookup',
+  surfaceInterval: 'surface_interval',
+  voiceChat: 'voice_chat',
+  sightings: 'map',
   blog: 'blog',
-};
+  scubaNews: 'scuba_news',
+  topics: 'topics',
+  partnerPortal: 'partner_portal',
+} as const;
 
 const HomeView: React.FC<HomeViewProps> = ({
   setActiveView,

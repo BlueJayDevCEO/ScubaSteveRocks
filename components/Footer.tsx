@@ -10,20 +10,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
   const context = useContext(AppContext);
   const brandLogo = context?.config?.logoUrl;
 
-  const scrollToStartup = () => {
-    const el = document.getElementById("startup");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      // fallback: ensure hash is set
-      window.location.hash = "startup";
-    }
-  };
-
   return (
     <footer className="w-full mt-20 pb-32 sm:pb-16">
       <div className="w-full max-w-5xl mx-auto border-t border-black/10 dark:border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-sm">
-
         {/* Brand */}
         <div className="flex items-center gap-3 text-light-text/80 dark:text-dark-text/80">
           {brandLogo ? (
@@ -31,6 +20,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
               src={brandLogo}
               alt="OSEA Diver"
               className="w-8 h-8 object-contain"
+              loading="lazy"
             />
           ) : (
             <span className="text-2xl">🌊</span>
@@ -40,25 +30,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
           </p>
         </div>
 
-        {/* Links */}
+        {/* Legal / Contact */}
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap justify-center">
-
-          <button
-            onClick={scrollToStartup}
-            className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-          >
-            Startup / About
-          </button>
-
-          <a
-            href="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-          >
-            Watch Demo Video
-          </a>
-
           <button
             onClick={onOpenTerms}
             className="text-light-text/70 dark:text-dark-text/70 hover:text-light-text dark:hover:text-dark-text transition-colors"
@@ -79,6 +52,18 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
           >
             Contact
           </a>
+        </div>
+      </div>
+
+      {/* Static Demo Video (embedded, no CTA) */}
+      <div className="mt-12 max-w-3xl mx-auto px-4">
+        <div className="relative w-full overflow-hidden rounded-xl border border-black/10 dark:border-white/10 bg-black">
+          <video
+            src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
+            controls
+            preload="metadata"
+            className="w-full h-auto"
+          />
         </div>
       </div>
 

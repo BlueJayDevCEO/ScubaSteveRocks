@@ -150,6 +150,9 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Landing demo video (public). If the URL is invalid/expired you'll see a friendly error.
+  const [demoVideoError, setDemoVideoError] = useState<string | null>(null);
+
   // Tab states for views
   const [identifyTab, setIdentifyTab] = useState<IdentifyViewTab>('upload');
   const [chatTab, setChatTab] = useState<ChatViewTab>('ask');
@@ -184,6 +187,11 @@ const App: React.FC = () => {
 
   // Dive Site Lookup
   const [hasSearchedDiveSite, setHasSearchedDiveSite] = useState(false);
+
+  // Keep the demo video URL in ONE place (easy to swap without hunting through JSX)
+  const DEMO_VIDEO_URL =
+    (import.meta as any).env?.VITE_PUBLIC_DEMO_VIDEO_URL ||
+    "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.appspot.com/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media";
 
   // Initial Load
   useEffect(() => {
@@ -709,13 +717,27 @@ if (!user) {
 
               <div className="bg-black">
                 <video
-                  src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932"
+                  key={DEMO_VIDEO_URL}
                   controls
                   playsInline
                   preload="metadata"
                   className="w-full h-auto"
-                />
+                  onError={() =>
+                    setDemoVideoError(
+                      "Demo video failed to load. The link may be expired/blocked. Update VITE_PUBLIC_DEMO_VIDEO_URL to a fresh public MP4 URL."
+                    )
+                  }
+                >
+                  <source src={DEMO_VIDEO_URL} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
               </div>
+
+              {demoVideoError && (
+                <div className="px-5 sm:px-6 py-4 text-sm text-red-400 border-t border-white/10 bg-black/40">
+                  {demoVideoError}
+                </div>
+              )}
             </div>
 
             <p className="mt-3 text-center text-sm text-white/70">
@@ -803,7 +825,7 @@ if (!user) {
           onOpenCredits={() => setShowCreditDetails(true)}
         />
 
-        {activeView === 'home' && <Hero />}
+        {/* NOTE: Public landing uses <Hero />. The authed app uses HomeView instead. */}
 
         <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 mb-20">
           {activeView === 'home' && (

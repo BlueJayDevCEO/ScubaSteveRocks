@@ -757,6 +757,7 @@ const App: React.FC = () => {
 
         <FunFactBubbles />
         <GlobalLoader isLoading={isLoading} config={config || undefined} />
+        <SEOHead />
 
         <Header
           onLogout={handleLogout}

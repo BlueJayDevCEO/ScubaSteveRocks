@@ -33,18 +33,15 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <meta name="description" content={description} />
       <link rel="canonical" href={canonicalUrl} />
 
-      {/* OpenGraph */}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonicalUrl} />
 
-      {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
 
-      {/* JSON-LD */}
       <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
     </Helmet>
   );

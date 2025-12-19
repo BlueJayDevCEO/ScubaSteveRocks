@@ -15,10 +15,9 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
   };
 
   const handlePrimary = (e: React.MouseEvent) => {
-    if (onPrimaryClick) {
-      e.preventDefault();
-      onPrimaryClick();
-    }
+    e.preventDefault();
+    if (onPrimaryClick) onPrimaryClick();
+    // If no handler is provided, do nothing (keeps behavior consistent)
   };
 
   const handleSecondary = (e: React.MouseEvent) => {
@@ -29,48 +28,43 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
 
   return (
     <section className="relative w-full overflow-hidden">
-      {/* Background overlay (keeps your existing ocean / image setup safe) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-black/85 z-0" />
-
-      {/* Subtle glow */}
-      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-blue-500/10 blur-3xl z-0" />
+      {/* Background overlay (keeps your existing ocean/image setup safe) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90 z-0" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 sm:pt-20 pb-16 sm:pb-20 text-white">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-16 sm:pb-20 text-white">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           {/* LEFT: Copy */}
           <div className="lg:col-span-6 text-center lg:text-left">
-            {/* Trust Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-xs sm:text-sm font-semibold shadow-md">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-              </span>
+            {/* Trust Badge (cleaner, less noisy) */}
+            <div className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-xs sm:text-sm font-semibold shadow-md">
+              <span className="inline-flex h-2 w-2 rounded-full bg-green-400" />
               {t('hero.badge', 'Live Demo • Built by Divers • Powered by AI')}
             </div>
 
-            {/* Headline */}
-            <h1 className="font-heading font-bold text-5xl sm:text-6xl lg:text-7xl leading-[1.05] drop-shadow-[0_4px_6px_rgba(0,0,0,0.6)]">
-              {t('hero.title', 'Meet Scuba Steve')}
-              <span className="block text-white/90">
-                {t('hero.subtitleStrong', 'your AI Dive Buddy.')}
-              </span>
+            {/* HEADLINE HIERARCHY (SEO + conversion) */}
+            <h1 className="font-heading font-extrabold text-5xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight drop-shadow-[0_10px_28px_rgba(0,0,0,0.75)]">
+              {t('hero.subtitleStrong', 'Your AI Dive Buddy')}
             </h1>
 
+            <p className="mt-3 text-white/85 text-lg sm:text-xl font-semibold">
+              {t('hero.title', 'Meet Scuba Steve')}
+            </p>
+
             {/* Subheadline */}
-            <p className="mt-6 max-w-2xl mx-auto lg:mx-0 text-lg sm:text-xl text-white/85">
+            <p className="mt-5 max-w-2xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-xl text-white/80">
               {t(
                 'hero.subheadline',
                 'Identify marine life from photos, plan safer dives, and fix underwater colors — instantly.'
               )}
             </p>
 
-            {/* CTAs */}
+            {/* CTAs (clear hierarchy, less confusion) */}
             <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
               <a
                 href="#try"
                 onClick={handlePrimary}
-                className="group inline-flex items-center justify-center px-7 py-4 rounded-xl bg-white text-black hover:bg-white/90 transition font-semibold shadow-2xl"
+                className="group inline-flex items-center justify-center px-7 py-4 rounded-2xl bg-white text-black hover:bg-white/90 transition font-semibold shadow-2xl shadow-black/30"
               >
                 {t('hero.ctaPrimary', 'Try Free')}
                 <span className="ml-2 opacity-70 group-hover:opacity-100 transition">→</span>
@@ -79,7 +73,7 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
               <a
                 href="#demo"
                 onClick={handleSecondary}
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl bg-black/40 hover:bg-black/55 transition font-semibold border border-white/15 backdrop-blur-md"
+                className="inline-flex items-center justify-center px-7 py-4 rounded-2xl bg-black/35 hover:bg-black/55 transition font-semibold border border-white/15 backdrop-blur-md"
               >
                 {t('hero.ctaSecondary', 'Watch Demo')}
               </a>
@@ -90,8 +84,8 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
               {t('hero.microcopy', 'No credit card • Built for recreational divers & snorkelers')}
             </p>
 
-            {/* Feature pills */}
-            <div className="mt-7 flex flex-wrap gap-2 justify-center lg:justify-start">
+            {/* Feature pills (kept, but slightly tighter) */}
+            <div className="mt-6 flex flex-wrap gap-2 justify-center lg:justify-start">
               {[
                 t('hero.pill1', '🐟 Marine ID'),
                 t('hero.pill2', '📸 Photo Fix'),
@@ -109,9 +103,9 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
             </div>
           </div>
 
-          {/* RIGHT: Product / Demo Card */}
+          {/* RIGHT: Demo Card (more “real product” feel) */}
           <div className="lg:col-span-6">
-            <div className="relative rounded-3xl overflow-hidden border border-white/15 bg-black/40 backdrop-blur-md shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+            <div className="relative rounded-3xl overflow-hidden border border-white/15 bg-black/35 backdrop-blur-md shadow-[0_30px_90px_rgba(0,0,0,0.65)]">
               {/* Top bar */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                 <div className="flex items-center gap-2">
@@ -124,34 +118,35 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
                 </div>
               </div>
 
-              {/* “Preview” area (no real video here; your #demo section has the real one) */}
+              {/* Preview area */}
               <div className="p-6 sm:p-7">
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-white/5 p-6">
-                  <div className="text-sm text-white/70">
-                    {t('hero.cardLine1', 'Upload a photo → get an ID + fun facts')}
+                  <div className="text-xl sm:text-2xl font-extrabold text-white">
+                    {t('hero.cardHeadline', 'Try Scuba Steve live')}
                   </div>
-                  <div className="mt-2 text-sm text-white/70">
-                    {t('hero.cardLine2', 'One-click color correction for underwater shots')}
-                  </div>
-                  <div className="mt-2 text-sm text-white/70">
-                    {t('hero.cardLine3', 'Ask anything: dive safety, sites, gear, planning')}
-                  </div>
+
+                  <p className="mt-2 text-sm sm:text-base text-white/70">
+                    {t(
+                      'hero.cardSub',
+                      'Upload a photo, ask a dive question, or fix an underwater shot — instantly.'
+                    )}
+                  </p>
 
                   <div className="mt-6 flex items-center gap-3">
                     <button
-                      onClick={() => scrollToDemo()}
-                      className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 transition font-semibold shadow-xl"
+                      onClick={scrollToDemo}
+                      className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 transition font-semibold shadow-xl shadow-black/30"
                       type="button"
                     >
-                      {t('hero.cardButton', 'Play the Demo')}
+                      {t('hero.cardButton', 'Scroll to Demo ↓')}
                     </button>
+
                     <div className="text-xs text-white/55">
                       {t('hero.cardHint', 'Takes ~45 seconds')}
                     </div>
                   </div>
                 </div>
 
-                {/* Tiny “reviewer friendly” note */}
                 <p className="mt-4 text-xs text-white/55">
                   {t(
                     'hero.reviewerNote',
@@ -161,7 +156,7 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
               </div>
             </div>
 
-            {/* credibility strip */}
+            {/* Credibility strip (kept, slightly more premium) */}
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
               <div className="rounded-2xl bg-white/5 border border-white/10 p-3">
                 <div className="text-lg font-bold">AI</div>
@@ -178,6 +173,11 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick, onSecondaryClick }) 
             </div>
           </div>
         </div>
+
+        {/* SEO-friendly hidden keywords (optional, very light; safe to remove if you prefer) */}
+        <p className="sr-only">
+          Scuba Steve AI helps scuba divers and snorkelers identify marine life, plan safer dives, and improve underwater photos.
+        </p>
       </div>
     </section>
   );

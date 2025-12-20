@@ -5,7 +5,7 @@ export default function SEOHead() {
   return (
     <Helmet>
       <title>Scuba Steve</title>
-      <meta name="description" content="Your AI Dive Buddy for the Ocean." />
+      <meta name="description" content="Your AI Dive Buddy." />
     </Helmet>
   );
 }

@@ -13,8 +13,8 @@ export default defineConfig(({ mode }) => {
           "@": path.resolve(__dirname, "."),
           "@services": path.resolve(__dirname, "./services"),
           "@components": path.resolve(__dirname, "./components"),
-        
-      }      
+      },
+   },      
 
     build: {
       outDir: "dist",

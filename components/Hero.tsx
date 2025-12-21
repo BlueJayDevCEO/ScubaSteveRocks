@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { doc, getDoc } from "firebase/firestore";
+import { db, auth } from "../services/firebase/config";
 import { db } from "@/services/firebase"; // adjust path if needed
 
 type HeroProps = {

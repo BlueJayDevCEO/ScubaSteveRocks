@@ -5,7 +5,7 @@ const DEMO_VIDEO_URL =
 
 export const DemoVideo: React.FC = () => {
   return (
-    <section id="video-demo" className="relative z-10 w-full">
+    <section id="video-demo" className="relative z-[60] w-full bg-black">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-light-card dark:bg-dark-card shadow-soft dark:shadow-soft-dark">
           <div className="p-5 sm:p-6">

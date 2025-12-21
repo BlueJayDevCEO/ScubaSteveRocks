@@ -3,6 +3,14 @@ import ReactDOM from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./services/i18n";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <App />
+    <SpeedInsights />
+  </React.StrictMode>
+);
 
 // --- STORAGE SAFETY CHECK (Mobile Crash Prevention) ---
 const validateStorage = () => {

@@ -1,7 +1,7 @@
 import React from "react";
 
 const DEMO_VIDEO_URL =
-  "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/Public%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=f6062388-7605-48e1-a0b8-f787d9c3b932";
+"https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/public%2Fvideo%2Fdemo.mp4?alt=media&token=30cad5f0-2efd-4d4b-b39e-f2cf4cf1d986"
 
 export const DemoVideo: React.FC = () => {
   return (

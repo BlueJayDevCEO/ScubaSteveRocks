@@ -10,9 +10,11 @@ export default defineConfig(({ mode }) => {
 
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "."), // <-- project root (because you don't have /src)
-      },
-    },
+          "@": path.resolve(__dirname, "."),
+          "@services": path.resolve(__dirname, "./services"),
+          "@components": path.resolve(__dirname, "./components"),
+        
+      }      
 
     build: {
       outDir: "dist",

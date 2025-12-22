@@ -269,7 +269,7 @@ export async function submitSightingCorrection(input: {
     correctedImageUrl = await getDownloadURL(snapshot.ref);
   }
 
-  // 1) Create correction doc (✅ includes sightingId field required by rules)
+  // Create correction doc (✅ matches your rules)
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {
     sightingId,
     submittedBy,
@@ -279,13 +279,6 @@ export async function submitSightingCorrection(input: {
     note,
     correctedImageUrl,
     createdAt: serverTimestamp(),
-  });
-
-  // 2) Mark parent as corrected (rules allow ONLY these fields)
-  await updateDoc(doc(db, "marineSightings", sightingId), {
-    corrected: true,
-    correctionsCount: increment(1),
-    lastCorrectionAt: serverTimestamp(),
   });
 
   return { success: true };

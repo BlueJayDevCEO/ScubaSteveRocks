@@ -28,6 +28,7 @@ export const REGIONS = [
   "Florida",
   "Galapagos",
   "Atlantic",
+  "Thailand",
   "Other",
 ];
 
@@ -257,17 +258,22 @@ export async function submitSightingCorrection(input: {
 
   let correctedImageUrl: string | null = null;
 
-  // Upload corrected image (optional)
-  if (correctedDataUrl && correctedDataUrl.startsWith("data:image")) {
-    const originalBlob = dataURLtoBlob(correctedDataUrl);
-    const compressedBlob = await resizeImageBlob(originalBlob);
+ // Upload corrected image (optional)
+if (correctedDataUrl && correctedDataUrl.startsWith("data:image")) {
+  const originalBlob = dataURLtoBlob(correctedDataUrl);
+  const compressedBlob = await resizeImageBlob(originalBlob);
 
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-    const photoRef = ref(storage, `marine-photos/corrections/${sightingId}/${fileName}`);
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+  const photoRef = ref(storage, `marine-photos/corrections/${sightingId}/${fileName}`);
 
+  try {
     const snapshot = await uploadBytes(photoRef, compressedBlob);
     correctedImageUrl = await getDownloadURL(snapshot.ref);
+    console.log("✅ correction image uploaded:", correctedImageUrl);
+  } catch (e) {
+    console.error("❌ correction image upload failed:", e);
   }
+}
 
   // Create correction doc (✅ matches your rules)
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {

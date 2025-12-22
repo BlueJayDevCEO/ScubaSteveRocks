@@ -1,7 +1,8 @@
 import React, { Suspense, ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "./services/i18n";
+import "./services/i18n"
+
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { HelmetProvider } from "react-helmet-async";
 

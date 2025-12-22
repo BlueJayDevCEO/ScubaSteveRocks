@@ -23,7 +23,7 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick }) => {
   return (
     <section className="relative w-full overflow-hidden">
       {/* ✅ Keep only a simple flat overlay for text contrast (no gradient, no tint blobs) */}
-      <div className="absolute inset-0 bg-black/35 z-0" />
+      {/*<div className="absolute inset-0 bg-black/35 z-0" /> */}
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 pt-14 sm:pt-20 pb-12 sm:pb-16 text-white">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">

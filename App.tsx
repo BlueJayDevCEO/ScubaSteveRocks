@@ -114,13 +114,13 @@ export const BACKGROUNDS = [
   },
   {
     id: "sunset",
-    name: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2FSunset.jpeg?alt=media&token=751f4ad4-8a60-4e7a-9b30-b7d68628308c",
-    url: "https://images.unsplash.com/photo-1599009569720-3363372ae077?q=80&w=2070&auto=format&fit=crop",
+    name: "sunset",
+    url: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2Fsunset.png.jpeg?alt=media&token=da3eb943-95e7-49f5-a7fb-d6700ead7fc5",
   },
   {
     id: "wreck",
-    name: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2FWreck.jpg?alt=media&token=47b13a29-1e4a-4ff6-a521-8ae588b7593b",
-    url: "https://images.unsplash.com/photo-1495571673623-26c79db223e7?q=80&w=2000&auto=format&fit=crop",
+    name: "wreck",
+    url: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2FWreck.png.jpg?alt=media&token=9f6fa859-f5e3-4517-a6dc-8761dd8c498a",
   },
 ];
 

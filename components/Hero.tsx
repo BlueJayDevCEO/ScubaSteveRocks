@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
-import { doc, getDoc } from "firebase/firestore";
-import { db, auth } from "../services/firebase/config";
 
 type HeroProps = {
   onPrimaryClick?: () => void;
@@ -9,27 +7,6 @@ type HeroProps = {
 
 export const Hero: React.FC<HeroProps> = ({ onPrimaryClick }) => {
   const { t } = useTranslation();
-  const [heroBgUrl, setHeroBgUrl] = useState<string | null>(null);
-
-  // 🔹 Load hero background from Firestore
-  useEffect(() => {
-    const loadHeroBg = async () => {
-      try {
-        const ref = doc(db, "site_config", "landing");
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data?.heroBgUrl) {
-            setHeroBgUrl(data.heroBgUrl);
-          }
-        }
-      } catch (err) {
-        console.warn("Hero background load failed:", err);
-      }
-    };
-
-    loadHeroBg();
-  }, []);
 
   const scrollToId = (id: string) => {
     const el = document.getElementById(id);
@@ -45,17 +22,8 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick }) => {
 
   return (
     <section className="relative w-full overflow-hidden">
-      {/* 🔹 Background image from Firebase */}
-      {heroBgUrl && (
-        <div
-          className="absolute inset-0 bg-cover bg-center z-0"
-          style={{ backgroundImage: `url(${heroBgUrl})` }}
-        />
-      )}
-
-      {/* Overlays */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-cyan-400/10 blur-3xl z-0" />
-      <div className="absolute -bottom-40 right-[-140px] w-[520px] h-[520px] rounded-full bg-blue-500/10 blur-3xl z-0" />
+      {/* ✅ Keep only a simple flat overlay for text contrast (no gradient, no tint blobs) */}
+      <div className="absolute inset-0 bg-black/35 z-0" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 pt-14 sm:pt-20 pb-12 sm:pb-16 text-white">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">

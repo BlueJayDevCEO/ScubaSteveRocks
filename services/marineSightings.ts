@@ -14,30 +14,12 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "./firebase/config";
 import { CommunitySighting } from "../types";
 
-// Master list of regions to ensure data consistency
-export const REGIONS = [
-  "Global",
-  "Caribbean",
-  "Red Sea",
-  "Indo-Pacific",
-  "Mediterranean",
-  "South Africa",
-  "Australia / GBR",
-  "Hawaii",
-  "California",
-  "Florida",
-  "Galapagos",
-  "Atlantic",
-  "Thailand",
-  "Other",
-];
-
 export interface MarineSightingInput {
   userId: string;
-  dataUrl?: string | null; // "data:image/jpeg;base64,...."
+  dataUrl?: string | null;
   commonName: string;
   species: string;
-  confidence: number; // 0–100
+  confidence: number;
   lat?: number | null;
   lng?: number | null;
   locationName: string;
@@ -45,9 +27,9 @@ export interface MarineSightingInput {
   description?: string;
 }
 
-// Helper: Resize Image Blob
-const resizeImageBlob = (originalBlob: Blob, maxWidth = 1280): Promise<Blob> => {
-  return new Promise((resolve) => {
+// --- helpers ---
+const resizeImageBlob = (originalBlob: Blob, maxWidth = 1280): Promise<Blob> =>
+  new Promise((resolve) => {
     const img = new Image();
     img.src = URL.createObjectURL(originalBlob);
 
@@ -56,13 +38,8 @@ const resizeImageBlob = (originalBlob: Blob, maxWidth = 1280): Promise<Blob> => 
       let width = img.width;
       let height = img.height;
 
-      // If already small enough
-      if (width <= maxWidth && height <= maxWidth) {
-        resolve(originalBlob);
-        return;
-      }
+      if (width <= maxWidth && height <= maxWidth) return resolve(originalBlob);
 
-      // Maintain aspect ratio
       if (width > height) {
         height = Math.round((height * maxWidth) / width);
         width = maxWidth;
@@ -76,18 +53,12 @@ const resizeImageBlob = (originalBlob: Blob, maxWidth = 1280): Promise<Blob> => 
       canvas.height = height;
 
       const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        resolve(originalBlob);
-        return;
-      }
+      if (!ctx) return resolve(originalBlob);
 
       ctx.drawImage(img, 0, 0, width, height);
 
       canvas.toBlob(
-        (blob) => {
-          if (blob) resolve(blob);
-          else resolve(originalBlob);
-        },
+        (blob) => resolve(blob ?? originalBlob),
         "image/jpeg",
         0.8
       );
@@ -95,9 +66,7 @@ const resizeImageBlob = (originalBlob: Blob, maxWidth = 1280): Promise<Blob> => 
 
     img.onerror = () => resolve(originalBlob);
   });
-};
 
-// Helper: Base64 Data URL to Blob
 const dataURLtoBlob = (dataurl: string): Blob => {
   const arr = dataurl.split(",");
   const mime = arr[0].match(/:(.*?);/)![1];
@@ -108,11 +77,7 @@ const dataURLtoBlob = (dataurl: string): Blob => {
   return new Blob([u8arr], { type: mime });
 };
 
-/**
- * Saves a marine sighting:
- * 1) Upload image to Storage (marine-photos/{uid}/{file}.jpg)
- * 2) Store metadata in Firestore (marineSightings)
- */
+// --- main: save sighting ---
 export async function saveMarineSighting(input: MarineSightingInput) {
   const {
     userId,
@@ -127,20 +92,13 @@ export async function saveMarineSighting(input: MarineSightingInput) {
     description,
   } = input;
 
-  if (!userId) {
-    console.error("saveMarineSighting: userId is required");
-    return { success: false, mode: "error", error: "Missing User ID" };
-  }
-
-  // guest/offline
+  if (!userId) return { success: false, mode: "error", error: "Missing User ID" };
   if (userId === "mock-demo-user" || userId.startsWith("guest-")) {
-    console.log("[Firestore] Guest/Offline. Skipping cloud save.");
     return { success: false, mode: "local" };
   }
 
   let imageUrl: string | null = null;
 
-  // Upload if data URL
   if (dataUrl && dataUrl.startsWith("data:image")) {
     try {
       const originalBlob = dataURLtoBlob(dataUrl);
@@ -152,90 +110,85 @@ export async function saveMarineSighting(input: MarineSightingInput) {
       const snapshot = await uploadBytes(photoRef, compressedBlob);
       imageUrl = await getDownloadURL(snapshot.ref);
     } catch (err) {
-      console.error("Failed to upload marine photo to Storage:", err);
+      console.error("Upload failed:", err);
       imageUrl = null;
     }
   } else if (dataUrl && dataUrl.startsWith("http")) {
     imageUrl = dataUrl;
   }
 
-  // Save sighting doc
-  try {
-    const docData = {
-      userId,
-      commonName,
-      species,
-      confidence,
-      imageUrl,
-      lat: lat ?? 0,
-      lng: lng ?? 0,
-      locationName: locationName || "Unknown Location",
-      region: region || "Other",
-      description: description || "",
-      corrected: false,
-      correctionsCount: 0,
-      createdAt: serverTimestamp(),
-    };
+  const docData = {
+    userId,
+    commonName,
+    species,
+    confidence,
+    imageUrl,
+    lat: lat ?? 0,
+    lng: lng ?? 0,
+    locationName: locationName || "Unknown Location",
+    region: region || "Other",
+    description: description || "",
+    corrected: false,
+    correctionsCount: 0,
+    correctedSpecies: "",
+    correctedCommonName: "",
+    correctedImageUrl: "",
+    createdAt: serverTimestamp(),
+  };
 
+  try {
     const docRef = await addDoc(collection(db, "marineSightings"), docData);
-    console.log("[Firestore] Sighting saved:", docRef.id);
     return { success: true, mode: "cloud", id: docRef.id };
   } catch (e: any) {
-    console.warn("[Firestore] Save failed:", e.message);
     return { success: false, mode: "error", error: e.message };
   }
 }
 
+// --- map feed ---
 const SIGHTINGS_COLLECTION = "marineSightings";
 
-/**
- * Returns recent community sightings, filtered by region name.
- */
 export async function getRecentSightings(region: string): Promise<CommunitySighting[]> {
-  const q = query(collection(db, SIGHTINGS_COLLECTION), orderBy("createdAt", "desc"), limit(100));
+  const q = query(
+    collection(db, SIGHTINGS_COLLECTION),
+    orderBy("createdAt", "desc"),
+    limit(100)
+  );
   const snap = await getDocs(q);
 
-  const allSightings: CommunitySighting[] = snap.docs.map((d) => {
+  const all = snap.docs.map((d) => {
     const data = d.data() as any;
-
     const createdAt =
       data.createdAt?.toMillis?.() ??
       (typeof data.createdAt === "number" ? data.createdAt : Date.now());
 
+    const isCorrected = !!data.corrected;
+    const displaySpecies =
+      isCorrected && data.correctedSpecies ? data.correctedSpecies : (data.species ?? data.commonName ?? "Unknown species");
+    const displayCommon =
+      isCorrected && data.correctedCommonName ? data.correctedCommonName : (data.commonName ?? "");
+    const displayImage =
+      isCorrected && data.correctedImageUrl ? data.correctedImageUrl : (data.imageUrl ?? "");
+
     return {
       id: d.id,
-      species: data.species ?? data.commonName ?? "Unknown species",
-      imageUrl: data.imageUrl ?? "",
+      species: displaySpecies,
+      commonName: displayCommon,
+      imageUrl: displayImage,
       location: data.locationName ?? "Unknown location",
       region: data.region ?? "Other",
       description: data.description ?? "",
       createdAt,
-      // optional display helpers:
-      corrected: !!data.corrected,
+      corrected: isCorrected,
       correctionsCount: data.correctionsCount ?? 0,
     } as any;
   });
 
-  if (!region || region === "Global") return allSightings;
+  if (!region || region === "Global") return all;
 
-  return allSightings.filter((s) => {
-    if (s.region === region) return true;
-    if (
-      (!s.region || s.region === "Other") &&
-      s.location.toLowerCase().includes(region.toLowerCase())
-    ) {
-      return true;
-    }
-    return false;
-  });
+  return all.filter((s: any) => s.region === region);
 }
 
-/**
- * ✅ Submit a correction for a sighting:
- * - uploads optional corrected image
- * - writes to marineSightings/{sightingId}/corrections
- * - marks parent sighting corrected + increments counter
- */
+// --- corrections ---
 export async function submitSightingCorrection(input: {
   sightingId: string;
   submittedBy: string; // uid
@@ -258,24 +211,20 @@ export async function submitSightingCorrection(input: {
 
   let correctedImageUrl: string | null = null;
 
- // Upload corrected image (optional)
-if (correctedDataUrl && correctedDataUrl.startsWith("data:image")) {
-  const originalBlob = dataURLtoBlob(correctedDataUrl);
-  const compressedBlob = await resizeImageBlob(originalBlob);
+  // Upload corrected image (optional)
+  if (correctedDataUrl && correctedDataUrl.startsWith("data:image")) {
+    const originalBlob = dataURLtoBlob(correctedDataUrl);
+    const compressedBlob = await resizeImageBlob(originalBlob);
 
-  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-  const photoRef = ref(storage, `marine-photos/corrections/${sightingId}/${fileName}`);
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    // ✅ IMPORTANT: this is the folder you should check in Storage
+    const photoRef = ref(storage, `marine-photos/corrections/${sightingId}/${fileName}`);
 
-  try {
     const snapshot = await uploadBytes(photoRef, compressedBlob);
     correctedImageUrl = await getDownloadURL(snapshot.ref);
-    console.log("✅ correction image uploaded:", correctedImageUrl);
-  } catch (e) {
-    console.error("❌ correction image upload failed:", e);
   }
-}
 
-  // Create correction doc (✅ matches your rules)
+  // 1) create correction doc
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {
     sightingId,
     submittedBy,
@@ -287,5 +236,15 @@ if (correctedDataUrl && correctedDataUrl.startsWith("data:image")) {
     createdAt: serverTimestamp(),
   });
 
-  return { success: true };
+  // 2) update parent so the WORLD MAP can display it without extra queries
+  await updateDoc(doc(db, "marineSightings", sightingId), {
+    corrected: true,
+    correctionsCount: increment(1),
+    lastCorrectionAt: serverTimestamp(),
+    correctedSpecies,
+    correctedCommonName,
+    correctedImageUrl: correctedImageUrl ?? "",
+  });
+
+  return { success: true, correctedImageUrl };
 }

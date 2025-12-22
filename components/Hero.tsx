@@ -54,7 +54,6 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick }) => {
       )}
 
       {/* Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-black/85 z-0" />
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-cyan-400/10 blur-3xl z-0" />
       <div className="absolute -bottom-40 right-[-140px] w-[520px] h-[520px] rounded-full bg-blue-500/10 blur-3xl z-0" />
 

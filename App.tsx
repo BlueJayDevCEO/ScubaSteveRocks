@@ -99,17 +99,17 @@ type View =
 export const BACKGROUNDS = [
   {
     id: "default",
-    name: "Sunlight Zone",
-    url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=2070&auto=format&fit=crop",
+    name: "Diver Abyss",
+    url: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2Fbg_hero.jpg.jpg?alt=media&token=68d9d400-6396-43b8-bdb2-6b5d37a6c7c1",
   },
   {
     id: "coral",
     name: "Coral Garden",
-    url: "https://images.unsplash.com/photo-1546026423-cc4642628d2b?q=80&w=2070&auto=format&fit=crop",
+    url: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2Fbg_cta.jpg.jpg?alt=media&token=4345ded0-49ed-40f9-8e51-567c2e9765f7",
   },
   {
     id: "deep",
-    name: "The Abyss",
+    name: "Floating ",
     url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop",
   },
   {

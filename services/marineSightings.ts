@@ -146,7 +146,7 @@ export async function saveMarineSighting(input: MarineSightingInput) {
       const compressedBlob = await resizeImageBlob(originalBlob);
 
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-      const photoRef = ref(storage, `marine/photos/${userId}/${fileName}`);
+      const photoRef = ref(storage, `marine-photos/${userId}/${fileName}`);
       
       // Upload the compressed blob
       const snapshot = await uploadBytes(photoRef, compressedBlob);

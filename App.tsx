@@ -110,16 +110,16 @@ export const BACKGROUNDS = [
   {
     id: "deep",
     name: "Floating ",
-    url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop",
+    url: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2Fbg_features.jpg.jpg?alt=media&token=cf85d32b-d7cf-4c88-bb92-49caecadce24",
   },
   {
-    id: "wreck",
-    name: "Shipwreck",
+    id: "sunset",
+    name: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2FSunset.jpeg?alt=media&token=751f4ad4-8a60-4e7a-9b30-b7d68628308c",
     url: "https://images.unsplash.com/photo-1599009569720-3363372ae077?q=80&w=2070&auto=format&fit=crop",
   },
   {
-    id: "jelly",
-    name: "Moon Jellies",
+    id: "wreck",
+    name: "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/site%2Fbackgrounds%2FWreck.jpg?alt=media&token=47b13a29-1e4a-4ff6-a521-8ae588b7593b",
     url: "https://images.unsplash.com/photo-1495571673623-26c79db223e7?q=80&w=2000&auto=format&fit=crop",
   },
 ];

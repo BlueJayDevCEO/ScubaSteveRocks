@@ -1,7 +1,6 @@
 import React from "react";
 
-const DEMO_VIDEO_URL =
-  "https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/public%2Fvideo%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=ea248515-9dd9-4ec7-9577-0e3550da53fa";
+const DEMO_VIDEO_PATH = "public/video/demo.mp4";
 
 export const DemoVideo: React.FC = () => {
   return (
@@ -18,12 +17,20 @@ export const DemoVideo: React.FC = () => {
           </div>
 
           <video
-            src={DEMO_VIDEO_URL}
             controls
             playsInline
             preload="metadata"
-            className="w-full h-auto"
-          />
+            crossOrigin="anonymous"
+            className="w-full h-auto bg-black"
+          >
+            <source
+              src={`https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/${encodeURIComponent(
+                DEMO_VIDEO_PATH
+              )}?alt=media`}
+              type="video/mp4"
+            />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </div>
     </section>

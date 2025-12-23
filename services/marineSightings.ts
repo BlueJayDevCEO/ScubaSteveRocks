@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "./firebase/config";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { CommunitySighting } from "../types";
 
 export interface MarineSightingInput {
@@ -226,15 +227,14 @@ export async function submitSightingCorrection(input: {
 
   // 1) create correction doc
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {
-    sightingId,
-    submittedBy,
-    status: "pending",
-    correctedSpecies,
-    correctedCommonName,
-    note,
-    correctedImageUrl,
-    createdAt: serverTimestamp(),
-  });
+  sightingId,
+  submittedBy: user.uid,
+  status: "pending",
+  correctedSpecies,
+  correctedCommonName,
+  correctedImageUrl: correctedImageUrl ?? "",
+  createdAt: serverTimestamp(),
+});
 
   // 2) update parent so the WORLD MAP can display it without extra queries
   await updateDoc(doc(db, "marineSightings", sightingId), {

@@ -14,6 +14,20 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "./firebase/config";
 import { CommunitySighting } from "../types";
 
+export const REGIONS = [
+  "Global",
+  "Caribbean",
+  "Red Sea",
+  "Mediterranean",
+  "Indo-Pacific",
+  "South Africa",
+  "Atlantic",
+  "Pacific",
+  "Other",
+] as const;
+
+export type Region = (typeof REGIONS)[number];
+
 export interface MarineSightingInput {
   userId: string;
   dataUrl?: string | null;
@@ -227,7 +241,7 @@ export async function submitSightingCorrection(input: {
   // 1) create correction doc
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {
   sightingId,
-  submittedBy: submittedBy,
+  submittedBy,
   status: "pending",
   correctedSpecies,
   correctedCommonName,

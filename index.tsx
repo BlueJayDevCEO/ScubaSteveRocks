@@ -10,6 +10,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HelmetProvider>
       <App />
+      <SpeedInsights />
     </HelmetProvider>
   </React.StrictMode>
 );

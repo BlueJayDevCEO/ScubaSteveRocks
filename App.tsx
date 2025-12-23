@@ -26,6 +26,7 @@ import { FunFactBubbles } from "./components/FunFactBubbles";
 import { Footer } from "./components/Footer";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { Hero } from "./components/Hero";
+import { ensureUserProfile } from "./services/userProfiles";
 
 // Views
 import HomeView from "./components/views/HomeView";

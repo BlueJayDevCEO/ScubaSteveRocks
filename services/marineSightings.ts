@@ -227,7 +227,7 @@ export async function submitSightingCorrection(input: {
   // 1) create correction doc
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {
   sightingId,
-  submittedBy: // ✅ use the variable you received
+  submittedBy: submittedBy,
   status: "pending",
   correctedSpecies,
   correctedCommonName,

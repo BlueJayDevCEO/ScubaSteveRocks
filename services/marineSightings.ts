@@ -12,7 +12,6 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "./firebase/config";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { CommunitySighting } from "../types";
 
 export interface MarineSightingInput {
@@ -228,7 +227,7 @@ export async function submitSightingCorrection(input: {
   // 1) create correction doc
   await addDoc(collection(db, "marineSightings", sightingId, "corrections"), {
   sightingId,
-  submittedBy: user.uid,
+  submittedBy: // ✅ use the variable you received
   status: "pending",
   correctedSpecies,
   correctedCommonName,

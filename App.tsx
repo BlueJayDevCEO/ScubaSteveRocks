@@ -696,9 +696,7 @@ const App: React.FC = () => {
 
             {/* ✅ Login */}
             <section id="try" className="w-full max-w-md mx-auto px-4 pb-10">
-              <div className="glass-panel rounded-3xl border border-white/10 bg-black/30 backdrop-blur-md p-5 sm:p-6 shadow-2xl">
-                <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
-              </div>
+              <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
             </section>
 
             {/* ✅ Google eligibility content */}

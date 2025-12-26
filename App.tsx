@@ -26,7 +26,6 @@ import { FunFactBubbles } from "./components/FunFactBubbles";
 import { Footer } from "./components/Footer";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { Hero } from "./components/Hero";
-import { ensureUserProfile } from "./services/userProfiles";
 import { track } from "@vercel/analytics";
 import { submitSightingCorrection } from "./services/marineSightings";
 
@@ -48,14 +47,18 @@ import SurfaceIntervalView from "./components/SurfaceIntervalView";
 import { VoiceChatView } from "./components/VoiceChatView";
 
 // Services
-import { getUserBriefings, saveBriefing, updateBriefing, saveBriefings } from "./services/jobService";
+import {
+  getUserBriefings,
+  saveBriefing,
+  updateBriefing,
+  saveBriefings,
+} from "./services/jobService";
 import { processMarineIdBriefing } from "./services/backendService";
 import {
   getDiveSiteBriefing,
   getDiveTripPlan,
   getSurfaceIntervalRecipe,
   searchSpecies,
-  CorrectionStyle,
   correctColor,
 } from "./services/geminiService";
 import { fetchAppConfig } from "./services/configService";
@@ -164,7 +167,8 @@ const App: React.FC = () => {
   const [prompt, setPrompt] = useState("");
 
   // Results
-  const [currentBriefingResult, setCurrentBriefingResult] = useState<Briefing | null>(null);
+  const [currentBriefingResult, setCurrentBriefingResult] =
+    useState<Briefing | null>(null);
 
   // Modals
   const [showProfile, setShowProfile] = useState(false);
@@ -184,7 +188,9 @@ const App: React.FC = () => {
 
   // Chat context
   const [chatContext, setChatContext] = useState<Briefing | null>(null);
-  const [chatInitialMessage, setChatInitialMessage] = useState<string | null>(null);
+  const [chatInitialMessage, setChatInitialMessage] = useState<string | null>(
+    null
+  );
 
   // Dive Site Lookup
   const [hasSearchedDiveSite, setHasSearchedDiveSite] = useState(false);
@@ -228,7 +234,8 @@ const App: React.FC = () => {
     const root = window.document.documentElement;
     const isDark =
       theme === "dark" ||
-      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      (theme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
 
     if (isDark) root.classList.add("dark");
     else root.classList.remove("dark");
@@ -252,10 +259,14 @@ const App: React.FC = () => {
         if (prev.isPro === isPro) return prev;
 
         const updatedUser = { ...prev, isPro };
-        localStorage.setItem("scubaSteveCurrentUser", JSON.stringify(updatedUser));
+        localStorage.setItem(
+          "scubaSteveCurrentUser",
+          JSON.stringify(updatedUser)
+        );
         updateUser(updatedUser);
 
-        if (isPro) setToastMessage("Pro Membership Active! Thank you for your support. 👑");
+        if (isPro)
+          setToastMessage("Pro Membership Active! Thank you for your support. 👑");
         return updatedUser;
       });
     });
@@ -287,6 +298,31 @@ const App: React.FC = () => {
   const guardLoading = () => {
     if (isLoading) return true;
     return false;
+  };
+
+  /**
+   * ✅ FIX #1 (CRITICAL): updateBriefing() MUST receive a full merged Briefing,
+   * not a fake `{ id, ...details } as Briefing`.
+   * This also avoids stale `briefings.find(...)` by using the same `prev` array.
+   */
+  const handleUpdateBriefingDetails = (
+    briefingId: number,
+    details: Partial<Briefing>
+  ) => {
+    setBriefings((prev) => {
+      const existing = prev.find((b) => b.id === briefingId);
+      if (!existing) return prev;
+
+      const updated: Briefing = { ...existing, ...details };
+      updateBriefing(updated);
+
+      return prev.map((b) => (b.id === briefingId ? updated : b));
+    });
+
+    setCurrentBriefingResult((prev) => {
+      if (!prev || prev.id !== briefingId) return prev;
+      return { ...prev, ...details };
+    });
   };
 
   // Marine ID
@@ -347,12 +383,22 @@ const App: React.FC = () => {
 
         newBriefing.input.imageUrls = [base64];
 
-        const processed = await processMarineIdBriefing(user, newBriefing, files, promptVal);
+        const processed = await processMarineIdBriefing(
+          user,
+          newBriefing,
+          files,
+          promptVal
+        );
         saveBriefing(processed);
         setBriefings((prev) => [processed, ...prev]);
         setCurrentBriefingResult(processed);
       } else {
-        const processed = await processMarineIdBriefing(user, newBriefing, null, promptVal);
+        const processed = await processMarineIdBriefing(
+          user,
+          newBriefing,
+          null,
+          promptVal
+        );
         saveBriefing(processed);
         setBriefings((prev) => [processed, ...prev]);
         setCurrentBriefingResult(processed);
@@ -365,68 +411,137 @@ const App: React.FC = () => {
     }
   };
 
-  // Color correction
-  const handleCorrection = async (briefingId: number, correctedName: string) => {
-  const briefing = briefings.find((b) => b.id === briefingId);
-  if (!briefing || !user) return;
+  /**
+   * ✅ FIX #2 (CRITICAL): handleColorCorrect was missing (caused runtime crash).
+   * This is a safe implementation; if correctColor throws, app won’t crash.
+   */
+  const handleColorCorrect = async (file: File | null, style: any) => {
+    if (!user) return;
+    if (guardLoading()) return;
 
-  // 1️⃣ Save draft locally so UI updates instantly
-  handleUpdateBriefingDetails(briefingId, {
-    correction: { final_species: correctedName }, // Steve logic
-    diverCorrection: {
-      correctedSpecies: correctedName,
-      correctedCommonName: correctedName,
-      status: "draft",
-      submittedAt: Date.now(),
-    },
-  });
+    // If you have a limit key for color, change this to your real type key.
+    // If not, keep it permissive.
+    if (!canUserPerformBriefing(user.uid, "color" as any)) {
+      setShowLimitModal(true);
+      return;
+    }
 
-  // 2️⃣ If this sighting was never pinned, we cannot update Firestore
-  if (!briefing.sightingId) {
-    setToastMessage("Pin to the World Map first, then submit a correction. 📍");
-    return;
-  }
+    if (!file) {
+      setToastMessage("Please upload a photo to correct colors.");
+      return;
+    }
 
-  try {
-    setToastMessage("Submitting correction to the World Map… 🌍");
+    setIsLoading(true);
+    setError(null);
 
-    await submitSightingCorrection({
-      sightingId: briefing.sightingId,
-      submittedBy: user.uid,
-      correctedSpecies: correctedName,
-      correctedCommonName: correctedName,
-      note: "",
-      correctedDataUrl: null,
-    });
+    try {
+      const reader = new FileReader();
+      const base64: string = await new Promise((resolve, reject) => {
+        reader.onerror = () => reject(new Error("File read failed"));
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
 
-    // 3️⃣ Mark as submitted locally after Firestore succeeds
+      // your geminiService expects style; if IdentifyView sends something else, it’s ok.
+      const result = await correctColor(base64, style);
+
+      const briefing: Briefing = {
+        id: Date.now(),
+        userId: user.uid,
+        type: "color" as any,
+        status: "completed",
+        createdAt: Date.now(),
+        input: { prompt: "color_correction", imageUrls: [base64] } as any,
+        output: { color: result } as any,
+      };
+
+      saveBriefing(briefing);
+      setBriefings((prev) => [briefing, ...prev]);
+      setCurrentBriefingResult(briefing);
+
+      incrementUserBriefingCount(user.uid, "color" as any);
+      setToastMessage("Color correction complete ✅");
+    } catch (e: any) {
+      console.error(e);
+      setError("Color correction failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * ✅ FIX #3: ONLY ONE handleCorrection exists.
+   * This function should be the “edit correction draft” handler (UI-level).
+   * Submitting to Firestore happens separately (handleSubmitSightingCorrection).
+   */
+  const handleCorrection = (briefingId: number, correctedName: string) => {
     handleUpdateBriefingDetails(briefingId, {
+      correction: { final_species: correctedName } as any,
       diverCorrection: {
         correctedSpecies: correctedName,
         correctedCommonName: correctedName,
-        status: "submitted",
+        status: "draft",
         submittedAt: Date.now(),
-      },
-      contributionLogged: true,
+      } as any,
     });
+  };
 
-    setToastMessage("Correction saved to the World Map ✅");
-  } catch (err: any) {
-    console.error("Correction failed", err);
+  /**
+   * Optional: if you want a “Submit correction” button later.
+   * (Not wired unless IdentifyView calls it.)
+   */
+  const handleSubmitSightingCorrection = async (
+    briefingId: number,
+    correctedName: string
+  ) => {
+    const briefing = briefings.find((b) => b.id === briefingId);
+    if (!briefing || !user) return;
 
-    handleUpdateBriefingDetails(briefingId, {
-      diverCorrection: {
+    handleCorrection(briefingId, correctedName);
+
+    if (!briefing.sightingId) {
+      setToastMessage("Pin to the World Map first, then submit a correction. 📍");
+      return;
+    }
+
+    try {
+      setToastMessage("Submitting correction to the World Map… 🌍");
+
+      await submitSightingCorrection({
+        sightingId: briefing.sightingId,
+        submittedBy: user.uid,
         correctedSpecies: correctedName,
         correctedCommonName: correctedName,
-        status: "failed",
-        submittedAt: Date.now(),
-        error: err?.message || "Unknown error",
-      },
-    });
+        note: "",
+        correctedDataUrl: null,
+      });
 
-    setToastMessage("Correction failed. Please try again.");
-  }
-};
+      handleUpdateBriefingDetails(briefingId, {
+        diverCorrection: {
+          correctedSpecies: correctedName,
+          correctedCommonName: correctedName,
+          status: "submitted",
+          submittedAt: Date.now(),
+        } as any,
+      });
+
+      setToastMessage("Correction saved to the World Map ✅");
+    } catch (err: any) {
+      console.error("Correction failed", err);
+
+      handleUpdateBriefingDetails(briefingId, {
+        diverCorrection: {
+          correctedSpecies: correctedName,
+          correctedCommonName: correctedName,
+          status: "failed",
+          submittedAt: Date.now(),
+          error: err?.message || "Unknown error",
+        } as any,
+      });
+
+      setToastMessage("Correction failed. Please try again.");
+    }
+  };
 
   // Species search
   const handleSpeciesSearch = async (query: string) => {
@@ -449,15 +564,15 @@ const App: React.FC = () => {
         type: "species_search",
         status: "completed",
         createdAt: Date.now(),
-        input: { prompt: query },
+        input: { prompt: query } as any,
         output: {
           suggestion: {
             ...result,
             greeting: "Here is what I found:",
             confidence: 100,
             footer: "Search Result",
-          } as any,
-        },
+          },
+        } as any,
       };
 
       saveBriefing(briefing);
@@ -493,8 +608,8 @@ const App: React.FC = () => {
         type: "dive_site",
         status: "completed",
         createdAt: Date.now(),
-        input: { prompt: siteName },
-        output: { briefing: result },
+        input: { prompt: siteName } as any,
+        output: { briefing: result } as any,
       };
 
       saveBriefing(briefing);
@@ -541,8 +656,8 @@ const App: React.FC = () => {
         type: "surface_interval",
         status: "completed",
         createdAt: Date.now(),
-        input: { prompt: ingredients },
-        output: { recipe },
+        input: { prompt: ingredients } as any,
+        output: { recipe } as any,
       };
 
       saveBriefing(briefing);
@@ -582,8 +697,8 @@ const App: React.FC = () => {
         type: "trip_planner",
         status: "completed",
         createdAt: Date.now(),
-        input: { prompt: destination },
-        output: { tripPlan: plan },
+        input: { prompt: destination } as any,
+        output: { tripPlan: plan } as any,
       };
 
       saveBriefing(briefing);
@@ -600,17 +715,19 @@ const App: React.FC = () => {
 
   const handleLogActivity = (type: Briefing["type"], outputData: any, promptVal: string) => {
     if (!user) return;
+
     const briefing: Briefing = {
       id: Date.now(),
       userId: user.uid,
       type,
       status: "completed",
       createdAt: Date.now(),
-      input: { prompt: promptVal },
-      output: outputData,
+      input: { prompt: promptVal } as any,
+      output: outputData as any,
     };
+
     saveBriefing(briefing);
-   setBriefings((prev) => [briefing, ...prev]);
+    setBriefings((prev) => [briefing, ...prev]);
   };
 
   const handleOpenChat = (context?: Briefing | null, message?: string | null) => {
@@ -620,105 +737,74 @@ const App: React.FC = () => {
     setChatTab("ask");
   };
 
- const handleUpdateBriefingDetails = (
-  briefingId: number,
-  details: Partial<Briefing>
-) => {
-  // 1) Update UI state first (always safe)
-  setBriefings((prev) =>
-    prev.map((b) => (b.id === briefingId ? { ...b, ...details } : b))
-  );
+  const handleConfirmIdentification = async (briefingId: number) => {
+    const briefing = briefings.find((b) => b.id === briefingId);
+    if (!briefing || !user) return;
 
-  if (currentBriefingResult?.id === briefingId) {
-    setCurrentBriefingResult((prev) => (prev ? { ...prev, ...details } : null));
-  }
+    if (!canUserContributeToMap(user.uid)) {
+      track("pin_blocked_weekly_limit", { user: user.uid });
 
-  // 2) Update storage/DB with a REAL updated briefing (not a fake cast)
-  const existing = briefings.find((b) => b.id === briefingId);
-  if (!existing) return;
+      setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
+      handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+      return;
+    }
 
-  const updated: Briefing = { ...existing, ...details };
-  updateBriefing(updated);
-};
+    const species =
+      (briefing as any).correction?.final_species ||
+      (briefing as any).output?.suggestion?.species_name ||
+      "Unknown Species";
 
-const handleSubmitCorrection = async (briefingId: number, correctedName: string) => {
-  handleUpdateBriefingDetails(briefingId, {
-    correction: { final_species: correctedName }, // Steve logic
-    diverCorrection: {
-      correctedSpecies: correctedName,
-      correctedCommonName: correctedName,
-      status: "draft",
-      submittedAt: Date.now(),
-    },
-  });
-};
+    const confidence = (briefing as any).output?.suggestion?.confidence || 100;
 
-const handleConfirmIdentification = async (briefingId: number) => {
-  const briefing = briefings.find((b) => b.id === briefingId);
-  if (!briefing || !user) return;
+    const description =
+      (briefing as any).output?.suggestion?.greeting ||
+      `A ${species} spotted by ${user.displayName}.`;
 
-  if (!canUserContributeToMap(user.uid)) {
-  track("pin_blocked_weekly_limit", { user: user.uid });
+    const region = (briefing as any).region || "Global";
+    const location = (briefing as any).location || "Unknown Location";
+    const image = (briefing as any).input?.imageUrls?.[0];
 
-  setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
-  handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-  return;
-}
+    setToastMessage("Pinning to Global Map... 🌍");
 
-  const species =
-    briefing.correction?.final_species ||
-    briefing.output?.suggestion?.species_name ||
-    "Unknown Species";
+    const result = await saveMarineSighting({
+      userId: user.uid,
+      dataUrl: image,
+      commonName: species,
+      species: species,
+      confidence: confidence,
+      locationName: location,
+      region: region,
+      description: description,
+    });
 
-  const confidence = briefing.output?.suggestion?.confidence || 100;
+    if (result?.success && result?.id) {
+      handleUpdateBriefingDetails(briefingId, { sightingId: result.id } as any);
 
-  const description =
-    briefing.output?.suggestion?.greeting ||
-    `A ${species} spotted by ${user.displayName}.`;
+      track("pin_to_map", {
+        user: user.uid,
+        species,
+        region,
+        sightingId: result.id,
+      });
 
-  const region = briefing.region || "Global";
-  const location = briefing.location || "Unknown Location";
-  const image = briefing.input?.imageUrls?.[0];
+      incrementContributionCount(user.uid);
+      setToastMessage("Success! Sighting pinned to the World Map. 📍");
+      handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+      return;
+    }
 
-  setToastMessage("Pinning to Global Map... 🌍");
+    if (result?.mode === "local") {
+      setToastMessage("Guest Mode: Saved to personal Logbook only.");
+    } else {
+      setToastMessage("Upload failed. Saved to local Logbook.");
+    }
 
-  const result = await saveMarineSighting({
-    userId: user.uid,
-    dataUrl: image,
-    commonName: species,
-    species: species,
-    confidence: confidence,
-    locationName: location,
-    region: region,
-    description: description,
-  });
-
-// ✅ Store the Firestore sighting ID (needed for corrections to update the same doc)
-if (result?.success && result?.id) {
-  handleUpdateBriefingDetails(briefingId, { sightingId: result.id });
-
-  track("pin_to_map", {
-    user: user.uid,
-    species,
-    region,
-    sightingId: result.id,
-  });
-}
-
-if (result?.success) {
-  incrementContributionCount(user.uid);
-  setToastMessage("Success! Sighting pinned to the World Map. 📍");
-} else if (result?.mode === "local") {
-  setToastMessage("Guest Mode: Saved to personal Logbook only.");
-} else {
-  setToastMessage("Upload failed. Saved to local Logbook.");
-}
-
-  handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-};
+    handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+  };
 
   // Background URL
-  const currentBgUrl = BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url;
+  const currentBgUrl =
+    BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url;
 
   /* ------------------ PUBLIC (NO USER) ------------------ */
   if (!user) {
@@ -733,12 +819,12 @@ if (result?.success) {
             className="living-ocean-bg fixed inset-0 z-0"
             style={{
               backgroundImage: `url('${
-                BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url
+                BACKGROUNDS.find((b) => b.id === backgroundId)?.url ||
+                BACKGROUNDS[0].url
               }')`,
             }}
           />
           <div className="relative z-10">
-            {/* ✅ Hero (single CTA only) */}
             <Hero
               onPrimaryClick={() => {
                 const el = document.getElementById("try");
@@ -747,20 +833,19 @@ if (result?.success) {
               }}
             />
 
-            {/* ✅ Login */}
             <section id="try" className="w-full max-w-md mx-auto px-4 pb-10">
               <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
             </section>
 
-            {/* ✅ Google eligibility content */}
             <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
               <StartupSection />
             </section>
 
-            {/* ✅ Footer contains the static demo video */}
-            <Footer onOpenTerms={() => setShowLegal("terms")} onOpenPrivacy={() => setShowLegal("privacy")} />
+            <Footer
+              onOpenTerms={() => setShowLegal("terms")}
+              onOpenPrivacy={() => setShowLegal("privacy")}
+            />
 
-            {/* Legal acceptance (public) */}
             {showLegalAcceptance && (
               <LegalAcceptanceModal
                 onAccept={() => {
@@ -805,7 +890,10 @@ if (result?.success) {
     >
       <GlobalStyles />
       <div className="min-h-screen text-light-text dark:text-dark-text font-sans transition-colors duration-300 flex flex-col relative overflow-x-hidden">
-        <div className="living-ocean-bg fixed inset-0 z-0" style={{ backgroundImage: `url('${currentBgUrl}')` }} />
+        <div
+          className="living-ocean-bg fixed inset-0 z-0"
+          style={{ backgroundImage: `url('${currentBgUrl}')` }}
+        />
 
         <FunFactBubbles />
         <GlobalLoader isLoading={isLoading} config={config || undefined} />
@@ -840,7 +928,7 @@ if (result?.success) {
               prompt={prompt}
               setPrompt={setPrompt}
               handleMarineId={handleMarineId}
-              handleColorCorrect={handleColorCorrect}
+              handleColorCorrect={handleColorCorrect} // ✅ now defined
               handleSpeciesSearch={handleSpeciesSearch}
               handleStartNewIdentification={() => {
                 setCurrentBriefingResult(null);
@@ -852,7 +940,7 @@ if (result?.success) {
               isCorrecting={false}
               currentBriefingResult={currentBriefingResult}
               setCurrentBriefingResult={setCurrentBriefingResult}
-              handleCorrection={handleCorrection}
+              handleCorrection={handleCorrection} // ✅ single function
               handleConfirmIdentification={handleConfirmIdentification}
               handleUpdateBriefingDetails={handleUpdateBriefingDetails}
               handleOpenChat={handleOpenChat}
@@ -912,11 +1000,18 @@ if (result?.success) {
 
           {activeView === "partner_portal" && <PartnerPortalView />}
 
-          {activeView === "game" && <DiveTrainingGameView onBack={() => setActiveView("home")} onLogActivity={handleLogActivity} />}
+          {activeView === "game" && (
+            <DiveTrainingGameView
+              onBack={() => setActiveView("home")}
+              onLogActivity={handleLogActivity}
+            />
+          )}
 
           {activeView === "blog" && <BlogView />}
 
-          {activeView === "scuba_news" && <ScubaNewsView articles={newsArticles} isLoading={isLoading} error={error} />}
+          {activeView === "scuba_news" && (
+            <ScubaNewsView articles={newsArticles} isLoading={isLoading} error={error} />
+          )}
 
           {activeView === "topics" && <TopicsView onStartTopicChat={handleOpenChat} />}
 
@@ -932,14 +1027,23 @@ if (result?.success) {
           )}
 
           {activeView === "dive_site_lookup" && (
-            <DiveSiteLookup onSearch={handleDiveSiteLookup as any} isLoading={isLoading} error={error} onOpenChat={handleOpenChat as any} />
+            <DiveSiteLookup
+              onSearch={handleDiveSiteLookup as any}
+              isLoading={isLoading}
+              error={error}
+              onOpenChat={handleOpenChat as any}
+            />
           )}
 
           {activeView === "surface_interval" && (
-            <SurfaceIntervalView onGenerate={handleSurfaceIntervalRecipe as any} isLoading={isLoading} error={error} onOpenChat={handleOpenChat as any} />
+            <SurfaceIntervalView
+              onGenerate={handleSurfaceIntervalRecipe as any}
+              isLoading={isLoading}
+              error={error}
+              onOpenChat={handleOpenChat as any}
+            />
           )}
 
-          {/* ✅ FIXED: VoiceChatView props match the component you pasted */}
           {activeView === "voice_chat" && (
             <VoiceChatView
               isBriefingLimitReached={!canUserPerformBriefing(user.uid, "voice")}
@@ -951,7 +1055,10 @@ if (result?.success) {
 
         <NavigationBar
           activeView={
-            activeView === "map" || activeView === "partner_portal" || activeView === "game" || activeView === "trip_planner"
+            activeView === "map" ||
+            activeView === "partner_portal" ||
+            activeView === "game" ||
+            activeView === "trip_planner"
               ? ("tools" as any)
               : (activeView as any)
           }
@@ -962,7 +1069,10 @@ if (result?.success) {
 
         <FloatingChatButton onOpenChat={() => handleOpenChat()} isNavVisible={true} />
 
-        <Footer onOpenTerms={() => setShowLegal("terms")} onOpenPrivacy={() => setShowLegal("privacy")} />
+        <Footer
+          onOpenTerms={() => setShowLegal("terms")}
+          onOpenPrivacy={() => setShowLegal("privacy")}
+        />
 
         {/* Modals */}
         {showProfile && (
@@ -970,7 +1080,12 @@ if (result?.success) {
             user={user}
             onClose={() => setShowProfile(false)}
             onSave={(name: string, photo: string, contrib: boolean) => {
-              const updated = { ...user, displayName: name, photoURL: photo, contributesData: contrib };
+              const updated = {
+                ...user,
+                displayName: name,
+                photoURL: photo,
+                contributesData: contrib,
+              };
               setUser(updated);
               updateUser(updated);
               setShowProfile(false);

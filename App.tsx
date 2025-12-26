@@ -620,49 +620,60 @@ const App: React.FC = () => {
     handleUpdateBriefingDetails(briefingId, details);
   };
 
-  const handleConfirmIdentification = async (briefingId: number) => {
-    const briefing = briefings.find((b) => b.id === briefingId);
-    if (!briefing || !user) return;
+const handleConfirmIdentification = async (briefingId: number) => {
+  const briefing = briefings.find((b) => b.id === briefingId);
+  if (!briefing || !user) return;
 
-    if (!canUserContributeToMap(user.uid)) {
-      setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
-      handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-      return;
-    }
-
-    const species =
-      briefing.correction?.final_species || briefing.output?.suggestion?.species_name || "Unknown Species";
-    const confidence = briefing.output?.suggestion?.confidence || 100;
-    const description =
-      briefing.output?.suggestion?.greeting || `A ${species} spotted by ${user.displayName}.`;
-    const region = briefing.region || "Global";
-    const location = briefing.location || "Unknown Location";
-    const image = briefing.input?.imageUrls?.[0];
-
-    setToastMessage("Pinning to Global Map... 🌍");
-
-    const result = await saveMarineSighting({
-      userId: user.uid,
-      dataUrl: image,
-      commonName: species,
-      species: species,
-      confidence: confidence,
-      locationName: location,
-      region: region,
-      description: description,
-    });
-
-    if (result.success) {
-      incrementContributionCount(user.uid);
-      setToastMessage("Success! Sighting pinned to the World Map. 📍");
-    } else if (result.mode === "local") {
-      setToastMessage("Guest Mode: Saved to personal Logbook only.");
-    } else {
-      setToastMessage("Upload failed. Saved to local Logbook.");
-    }
-
+  if (!canUserContributeToMap(user.uid)) {
+    setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
     handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-  };
+    return;
+  }
+
+  const species =
+    briefing.correction?.final_species ||
+    briefing.output?.suggestion?.species_name ||
+    "Unknown Species";
+
+  const confidence = briefing.output?.suggestion?.confidence || 100;
+
+  const description =
+    briefing.output?.suggestion?.greeting ||
+    `A ${species} spotted by ${user.displayName}.`;
+
+  const region = briefing.region || "Global";
+  const location = briefing.location || "Unknown Location";
+  const image = briefing.input?.imageUrls?.[0];
+
+  setToastMessage("Pinning to Global Map... 🌍");
+
+  const result = await saveMarineSighting({
+    userId: user.uid,
+    dataUrl: image,
+    commonName: species,
+    species: species,
+    confidence: confidence,
+    locationName: location,
+    region: region,
+    description: description,
+  });
+
+  // ✅ Store the Firestore sighting ID (needed for corrections to update the same doc)
+  if (result?.success && result?.id) {
+    handleUpdateBriefingDetails(briefingId, { sightingId: result.id });
+  }
+
+  if (result?.success) {
+    incrementContributionCount(user.uid);
+    setToastMessage("Success! Sighting pinned to the World Map. 📍");
+  } else if (result?.mode === "local") {
+    setToastMessage("Guest Mode: Saved to personal Logbook only.");
+  } else {
+    setToastMessage("Upload failed. Saved to local Logbook.");
+  }
+
+  handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+};
 
   // Background URL
   const currentBgUrl = BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url;

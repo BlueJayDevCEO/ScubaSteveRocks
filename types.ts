@@ -31,13 +31,27 @@ export interface DiveTripPlanResult {
 export interface Briefing {
   id: number;
   userId: string;
-  type: 'marine_id' | 'color_correct' | 'dive_site' | 'live_report' | 'trip_planner' | 'voice' | 'imported_dive' | 'surface_interval' | 'species_search' | 'game_round' | 'calculator';
+  type:
+    | 'marine_id'
+    | 'color_correct'
+    | 'dive_site'
+    | 'live_report'
+    | 'trip_planner'
+    | 'voice'
+    | 'imported_dive'
+    | 'surface_interval'
+    | 'species_search'
+    | 'game_round'
+    | 'calculator';
+
   status: 'pending' | 'completed' | 'failed';
+
   input: {
     prompt?: string;
     imageUrls?: string[]; // base64
     originalFileNames?: string[];
   };
+
   output?: {
     suggestion?: IdentificationResult;
     correctedImageUrl?: string; // base64
@@ -53,19 +67,36 @@ export interface Briefing {
       result: string;
     };
   };
-  correction?: { // For user correction
+
+  // Steve / model correction (internal)
+  correction?: {
     final_species: string;
   };
+
   createdAt: number;
+
+  // ❗ Only true once a Firestore write succeeded
   contributionLogged?: boolean;
+
+  // ✅ Firestore document ID for World Map pin (NEVER removed)
+  sightingId?: string;
+
+  // ✅ Diver-friendly correction tracking (does not close workflow)
+  diverCorrection?: {
+    correctedSpecies: string;
+    correctedCommonName: string;
+    status: 'draft' | 'submitted' | 'failed';
+    submittedAt?: number; // ms timestamp
+  };
+
   // Dive Log fields
   location?: string;
-  region?: string; // Added for Sorting into Regional Files
-  dive_time?: number; // in minutes
-  max_depth?: number; // in meters
+  region?: string;
+  dive_time?: number;
+  max_depth?: number;
   dive_buddy?: string;
   notes?: string;
-  species_sighted?: string; // Comma-separated list for imported dives
+  species_sighted?: string;
 }
 
 export interface GameRound {

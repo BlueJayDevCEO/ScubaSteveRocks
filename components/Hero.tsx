@@ -17,7 +17,7 @@ export const Hero: React.FC<HeroProps> = ({ onPrimaryClick }) => {
   const handlePrimary = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onPrimaryClick) onPrimaryClick();
-    else scrollToId("try");
+    else scrollToId("login");
   };
 
   return (

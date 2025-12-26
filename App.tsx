@@ -617,7 +617,7 @@ const App: React.FC = () => {
 
  const handleCorrection = (briefingId: number, correctedName: string) => {
   // Do NOT mark contributionLogged here — correction is not “submitted” yet.
-    handleUpdateBriefingDetails(briefingId, {
+  handleUpdateBriefingDetails(briefingId, {
     correction: { final_species: correctedName }, // keep for Steve logic
 
     diverCorrection: {
@@ -625,7 +625,9 @@ const App: React.FC = () => {
       correctedCommonName: correctedName,
       status: "draft",
       submittedAt: Date.now(),
-  };
+    },
+  });
+};
 
 const handleConfirmIdentification = async (briefingId: number) => {
   const briefing = briefings.find((b) => b.id === briefingId);

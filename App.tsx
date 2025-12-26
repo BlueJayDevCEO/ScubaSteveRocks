@@ -366,55 +366,67 @@ const App: React.FC = () => {
   };
 
   // Color correction
-  const handleColorCorrect = async (files: File[], style: CorrectionStyle) => {
-    if (!user) return;
-    if (guardLoading()) return;
+  const handleCorrection = async (briefingId: number, correctedName: string) => {
+  const briefing = briefings.find((b) => b.id === briefingId);
+  if (!briefing || !user) return;
 
-    if (!canUserPerformBriefing(user.uid, "color_correct")) {
-      setShowLimitModal(true);
-      return;
-    }
+  // 1️⃣ Save draft locally so UI updates instantly
+  handleUpdateBriefingDetails(briefingId, {
+    correction: { final_species: correctedName }, // Steve logic
+    diverCorrection: {
+      correctedSpecies: correctedName,
+      correctedCommonName: correctedName,
+      status: "draft",
+      submittedAt: Date.now(),
+    },
+  });
 
-    setIsLoading(true);
-    setError(null);
+  // 2️⃣ If this sighting was never pinned, we cannot update Firestore
+  if (!briefing.sightingId) {
+    setToastMessage("Pin to the World Map first, then submit a correction. 📍");
+    return;
+  }
 
-    try {
-      const file = files[0];
-      const reader = new FileReader();
+  try {
+    setToastMessage("Submitting correction to the World Map… 🌍");
 
-      const base64: string = await new Promise((resolve, reject) => {
-        reader.onerror = () => reject(new Error("File read failed"));
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
+    await submitSightingCorrection({
+      sightingId: briefing.sightingId,
+      submittedBy: user.uid,
+      correctedSpecies: correctedName,
+      correctedCommonName: correctedName,
+      note: "",
+      correctedDataUrl: null,
+    });
 
-      const part = {
-        inlineData: { mimeType: file.type, data: base64.split(",")[1] },
-      };
+    // 3️⃣ Mark as submitted locally after Firestore succeeds
+    handleUpdateBriefingDetails(briefingId, {
+      diverCorrection: {
+        correctedSpecies: correctedName,
+        correctedCommonName: correctedName,
+        status: "submitted",
+        submittedAt: Date.now(),
+      },
+      contributionLogged: true,
+    });
 
-      const result = await correctColor(part as any, style);
+    setToastMessage("Correction saved to the World Map ✅");
+  } catch (err: any) {
+    console.error("Correction failed", err);
 
-      const briefing: Briefing = {
-        id: Date.now(),
-        userId: user.uid,
-        type: "color_correct",
-        status: "completed",
-        createdAt: Date.now(),
-        input: { imageUrls: [base64], originalFileNames: [file.name] },
-        output: { correctedImageUrl: `data:${result.mimeType};base64,${result.data}` },
-      };
+    handleUpdateBriefingDetails(briefingId, {
+      diverCorrection: {
+        correctedSpecies: correctedName,
+        correctedCommonName: correctedName,
+        status: "failed",
+        submittedAt: Date.now(),
+        error: err?.message || "Unknown error",
+      },
+    });
 
-      saveBriefing(briefing);
-      setBriefings((prev) => [briefing, ...prev]);
-      setCurrentBriefingResult(briefing);
-      incrementUserBriefingCount(user.uid, "color_correct");
-    } catch (e) {
-      console.error(e);
-      setError("Color correction failed.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setToastMessage("Correction failed. Please try again.");
+  }
+};
 
   // Species search
   const handleSpeciesSearch = async (query: string) => {
@@ -621,8 +633,7 @@ const App: React.FC = () => {
   // Do NOT mark contributionLogged here — correction is not “submitted” yet.
   handleUpdateBriefingDetails(briefingId, {
     correction: { final_species: correctedName }, // keep for Steve logic
-
-    diverCorrection: {
+      diverCorrection: {
       correctedSpecies: correctedName,
       correctedCommonName: correctedName,
       status: "draft",

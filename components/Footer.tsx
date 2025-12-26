@@ -59,7 +59,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenTerms, onOpenPrivacy }) =>
       <div className="mt-12 max-w-3xl mx-auto px-4">
         <div className="relative w-full overflow-hidden rounded-xl border border-black/10 dark:border-white/10 bg-black">
           <video
-            src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/public%2Fvideo%2F16.12.2025_10.48.40_REC.mp4?alt=media&token=b84304f8-d576-4242-8ab6-197e92f54d9b"
+            src="https://firebasestorage.googleapis.com/v0/b/scubasteverocks-1b9a9.firebasestorage.app/o/public%2Fvideo%2FScubaStevDemo.mp4?alt=media&token=4c387a47-817c-4264-9fe2-81593cd9859f"
             controls
             preload="metadata"
             className="w-full h-auto"

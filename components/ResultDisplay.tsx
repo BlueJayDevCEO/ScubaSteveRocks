@@ -110,9 +110,13 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ briefing, onCorrec
         '<a href="/" class="font-bold text-light-accent dark:text-dark-accent hover:underline">Scuba Steve AI™</a>'
     );
 
-    const isConfirmed = briefing.contributionLogged === true && !briefing.correction;
-    const isCorrected = briefing.contributionLogged === true && !!briefing.correction;
-    const needsAction = briefing.contributionLogged === false && !isDemo;
+                  // Treat undefined as "not logged yet" (common in your objects)
+              const isConfirmed = briefing.contributionLogged === true && !briefing.correction;
+              const isCorrected = briefing.contributionLogged === true && !!briefing.correction;
+              
+              // ✅ Show actions whenever it's not explicitly logged yet
+              const needsAction = briefing.contributionLogged !== true && !isDemo;
+
 
     const actions = !isDemo ? (
         <div className="flex flex-wrap items-center gap-2">

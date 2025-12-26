@@ -27,6 +27,8 @@ import { Footer } from "./components/Footer";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { Hero } from "./components/Hero";
 import { ensureUserProfile } from "./services/userProfiles";
+import { track } from "@vercel/analytics";
+import { submitSightingCorrection } from "./services/marineSightings";
 
 // Views
 import HomeView from "./components/views/HomeView";
@@ -364,55 +366,67 @@ const App: React.FC = () => {
   };
 
   // Color correction
-  const handleColorCorrect = async (files: File[], style: CorrectionStyle) => {
-    if (!user) return;
-    if (guardLoading()) return;
+  const handleCorrection = async (briefingId: number, correctedName: string) => {
+  const briefing = briefings.find((b) => b.id === briefingId);
+  if (!briefing || !user) return;
 
-    if (!canUserPerformBriefing(user.uid, "color_correct")) {
-      setShowLimitModal(true);
-      return;
-    }
+  // 1️⃣ Save draft locally so UI updates instantly
+  handleUpdateBriefingDetails(briefingId, {
+    correction: { final_species: correctedName }, // Steve logic
+    diverCorrection: {
+      correctedSpecies: correctedName,
+      correctedCommonName: correctedName,
+      status: "draft",
+      submittedAt: Date.now(),
+    },
+  });
 
-    setIsLoading(true);
-    setError(null);
+  // 2️⃣ If this sighting was never pinned, we cannot update Firestore
+  if (!briefing.sightingId) {
+    setToastMessage("Pin to the World Map first, then submit a correction. 📍");
+    return;
+  }
 
-    try {
-      const file = files[0];
-      const reader = new FileReader();
+  try {
+    setToastMessage("Submitting correction to the World Map… 🌍");
 
-      const base64: string = await new Promise((resolve, reject) => {
-        reader.onerror = () => reject(new Error("File read failed"));
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
+    await submitSightingCorrection({
+      sightingId: briefing.sightingId,
+      submittedBy: user.uid,
+      correctedSpecies: correctedName,
+      correctedCommonName: correctedName,
+      note: "",
+      correctedDataUrl: null,
+    });
 
-      const part = {
-        inlineData: { mimeType: file.type, data: base64.split(",")[1] },
-      };
+    // 3️⃣ Mark as submitted locally after Firestore succeeds
+    handleUpdateBriefingDetails(briefingId, {
+      diverCorrection: {
+        correctedSpecies: correctedName,
+        correctedCommonName: correctedName,
+        status: "submitted",
+        submittedAt: Date.now(),
+      },
+      contributionLogged: true,
+    });
 
-      const result = await correctColor(part as any, style);
+    setToastMessage("Correction saved to the World Map ✅");
+  } catch (err: any) {
+    console.error("Correction failed", err);
 
-      const briefing: Briefing = {
-        id: Date.now(),
-        userId: user.uid,
-        type: "color_correct",
-        status: "completed",
-        createdAt: Date.now(),
-        input: { imageUrls: [base64], originalFileNames: [file.name] },
-        output: { correctedImageUrl: `data:${result.mimeType};base64,${result.data}` },
-      };
+    handleUpdateBriefingDetails(briefingId, {
+      diverCorrection: {
+        correctedSpecies: correctedName,
+        correctedCommonName: correctedName,
+        status: "failed",
+        submittedAt: Date.now(),
+        error: err?.message || "Unknown error",
+      },
+    });
 
-      saveBriefing(briefing);
-      setBriefings((prev) => [briefing, ...prev]);
-      setCurrentBriefingResult(briefing);
-      incrementUserBriefingCount(user.uid, "color_correct");
-    } catch (e) {
-      console.error(e);
-      setError("Color correction failed.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setToastMessage("Correction failed. Please try again.");
+  }
+};
 
   // Species search
   const handleSpeciesSearch = async (query: string) => {
@@ -596,7 +610,7 @@ const App: React.FC = () => {
       output: outputData,
     };
     saveBriefing(briefing);
-    setBriefings((prev) => [briefing, ...prev]);
+   setBriefings((prev) => [briefing, ...prev]);
   };
 
   const handleOpenChat = (context?: Briefing | null, message?: string | null) => {
@@ -615,54 +629,82 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCorrection = (briefingId: number, correctedName: string) => {
-    const details = { correction: { final_species: correctedName }, contributionLogged: true };
-    handleUpdateBriefingDetails(briefingId, details);
-  };
+ const handleCorrection = (briefingId: number, correctedName: string) => {
+  // Do NOT mark contributionLogged here — correction is not “submitted” yet.
+  handleUpdateBriefingDetails(briefingId, {
+    correction: { final_species: correctedName }, // keep for Steve logic
+      diverCorrection: {
+      correctedSpecies: correctedName,
+      correctedCommonName: correctedName,
+      status: "draft",
+      submittedAt: Date.now(),
+    },
+  });
+};
 
-  const handleConfirmIdentification = async (briefingId: number) => {
-    const briefing = briefings.find((b) => b.id === briefingId);
-    if (!briefing || !user) return;
+const handleConfirmIdentification = async (briefingId: number) => {
+  const briefing = briefings.find((b) => b.id === briefingId);
+  if (!briefing || !user) return;
 
-    if (!canUserContributeToMap(user.uid)) {
-      setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
-      handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-      return;
-    }
+  if (!canUserContributeToMap(user.uid)) {
+  track("pin_blocked_weekly_limit", { user: user.uid });
 
-    const species =
-      briefing.correction?.final_species || briefing.output?.suggestion?.species_name || "Unknown Species";
-    const confidence = briefing.output?.suggestion?.confidence || 100;
-    const description =
-      briefing.output?.suggestion?.greeting || `A ${species} spotted by ${user.displayName}.`;
-    const region = briefing.region || "Global";
-    const location = briefing.location || "Unknown Location";
-    const image = briefing.input?.imageUrls?.[0];
+  setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
+  handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+  return;
+}
 
-    setToastMessage("Pinning to Global Map... 🌍");
+  const species =
+    briefing.correction?.final_species ||
+    briefing.output?.suggestion?.species_name ||
+    "Unknown Species";
 
-    const result = await saveMarineSighting({
-      userId: user.uid,
-      dataUrl: image,
-      commonName: species,
-      species: species,
-      confidence: confidence,
-      locationName: location,
-      region: region,
-      description: description,
-    });
+  const confidence = briefing.output?.suggestion?.confidence || 100;
 
-    if (result.success) {
-      incrementContributionCount(user.uid);
-      setToastMessage("Success! Sighting pinned to the World Map. 📍");
-    } else if (result.mode === "local") {
-      setToastMessage("Guest Mode: Saved to personal Logbook only.");
-    } else {
-      setToastMessage("Upload failed. Saved to local Logbook.");
-    }
+  const description =
+    briefing.output?.suggestion?.greeting ||
+    `A ${species} spotted by ${user.displayName}.`;
 
-    handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-  };
+  const region = briefing.region || "Global";
+  const location = briefing.location || "Unknown Location";
+  const image = briefing.input?.imageUrls?.[0];
+
+  setToastMessage("Pinning to Global Map... 🌍");
+
+  const result = await saveMarineSighting({
+    userId: user.uid,
+    dataUrl: image,
+    commonName: species,
+    species: species,
+    confidence: confidence,
+    locationName: location,
+    region: region,
+    description: description,
+  });
+
+// ✅ Store the Firestore sighting ID (needed for corrections to update the same doc)
+if (result?.success && result?.id) {
+  handleUpdateBriefingDetails(briefingId, { sightingId: result.id });
+
+  track("pin_to_map", {
+    user: user.uid,
+    species,
+    region,
+    sightingId: result.id,
+  });
+}
+
+if (result?.success) {
+  incrementContributionCount(user.uid);
+  setToastMessage("Success! Sighting pinned to the World Map. 📍");
+} else if (result?.mode === "local") {
+  setToastMessage("Guest Mode: Saved to personal Logbook only.");
+} else {
+  setToastMessage("Upload failed. Saved to local Logbook.");
+}
+
+  handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+};
 
   // Background URL
   const currentBgUrl = BACKGROUNDS.find((b) => b.id === backgroundId)?.url || BACKGROUNDS[0].url;
@@ -696,9 +738,7 @@ const App: React.FC = () => {
 
             {/* ✅ Login */}
             <section id="try" className="w-full max-w-md mx-auto px-4 pb-10">
-              <div className="glass-panel rounded-3xl border border-white/10 bg-black/30 backdrop-blur-md p-5 sm:p-6 shadow-2xl">
-                <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
-              </div>
+              <LoginPage onLoginSuccess={handleLogin} config={config || undefined} />
             </section>
 
             {/* ✅ Google eligibility content */}

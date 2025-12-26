@@ -129,27 +129,91 @@ export const LoginPage: FC<LoginPageProps> = ({ onLoginSuccess, config }) => {
       </main>
 
       {/* Features Grid */}
-      <section className="relative z-10 py-20 px-6 border-t border-white/5 bg-[#011627]/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FeatureCard 
-              icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-              title="Marine ID"
-              desc="Snap a photo of any fish, coral, or critter. Scuba Steve identifies it instantly with 95% accuracy and provides fun facts."
+<section className="relative z-10 py-20 px-6 border-t border-white/5 bg-black/20 backdrop-blur-sm">
+  <div className="max-w-6xl mx-auto">
+    {/* Section Header */}
+    <div className="mb-10 text-center">
+      <h2 className="text-3xl sm:text-4xl font-heading font-bold text-white">
+        What Steve can do
+      </h2>
+      <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+        Instant marine ID, diver-tested guidance, and tools that make every dive safer and more fun.
+      </p>
+    </div>
+
+    {/* Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <FeatureCard
+        icon={
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
             />
-            <FeatureCard 
-              icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 10l6-3m0 0l-6-4m6 4v10" /></svg>}
-              title="Dive Planning"
-              desc="Calculate MOD, EAD, SAC rates, and plan complex trips. Get live condition reports for any dive site on Earth."
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
             />
-            <FeatureCard 
-              icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>}
-              title="Voice Assistant"
-              desc="Talk to Scuba Steve hands-free. Ask about safety protocols, gear advice, or identifying that weird thing you saw."
+          </svg>
+        }
+        title="Marine ID"
+        desc="Upload a photo and get a likely species ID with key features, fun facts, and diver-friendly notes."
+      />
+
+      <FeatureCard
+        icon={
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m-6 10l6-3m0 0l-6-4m6 4v10"
             />
-          </div>
-        </div>
-      </section>
+          </svg>
+        }
+        title="Dive Planning"
+        desc="Plan dives with practical guidance—MOD, EAD, SAC basics, gear checks, and safer decision-making."
+      />
+
+      <FeatureCard
+        icon={
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+            />
+          </svg>
+        }
+        title="Voice Assistant"
+        desc="Hands-free help for skills, safety protocols, and quick answers—perfect for dive briefs and debriefs."
+      />
+    </div>
+  </div>
+</section>
 
       {/* Footer */}
       <footer className="relative z-10 py-12 px-6 border-t border-white/5 text-center">

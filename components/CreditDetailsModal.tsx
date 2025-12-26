@@ -125,7 +125,7 @@ export const CreditDetailsModal: React.FC<CreditDetailsModalProps> = ({ user, on
                 disabled={isLoadingPayment}
                 className="block w-full bg-gradient-to-r from-light-accent to-light-secondary dark:from-dark-accent dark:to-dark-secondary text-white font-bold text-lg py-3 rounded-xl text-center shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100"
             >
-                {isLoadingPayment ? 'Connecting...' : 'Upgrade to Pro ($3.99/mo) 👑'}
+                {isLoadingPayment ? 'Connecting...' : 'Upgrade to Pro ($4.99/mo) 👑'}
             </button>
         )}
         

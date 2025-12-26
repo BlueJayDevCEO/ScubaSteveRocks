@@ -620,20 +620,31 @@ const App: React.FC = () => {
     setChatTab("ask");
   };
 
-  const handleUpdateBriefingDetails = (briefingId: number, details: Partial<Briefing>) => {
-    const updated = { id: briefingId, ...details } as Briefing;
-    updateBriefing(updated);
-    setBriefings((prev) => prev.map((b) => (b.id === briefingId ? { ...b, ...details } : b)));
-    if (currentBriefingResult?.id === briefingId) {
-      setCurrentBriefingResult((prev) => (prev ? { ...prev, ...details } : null));
-    }
-  };
+ const handleUpdateBriefingDetails = (
+  briefingId: number,
+  details: Partial<Briefing>
+) => {
+  // 1) Update UI state first (always safe)
+  setBriefings((prev) =>
+    prev.map((b) => (b.id === briefingId ? { ...b, ...details } : b))
+  );
 
- const handleCorrection = (briefingId: number, correctedName: string) => {
-  // Do NOT mark contributionLogged here — correction is not “submitted” yet.
+  if (currentBriefingResult?.id === briefingId) {
+    setCurrentBriefingResult((prev) => (prev ? { ...prev, ...details } : null));
+  }
+
+  // 2) Update storage/DB with a REAL updated briefing (not a fake cast)
+  const existing = briefings.find((b) => b.id === briefingId);
+  if (!existing) return;
+
+  const updated: Briefing = { ...existing, ...details };
+  updateBriefing(updated);
+};
+
+const handleCorrection = (briefingId: number, correctedName: string) => {
   handleUpdateBriefingDetails(briefingId, {
-    correction: { final_species: correctedName }, // keep for Steve logic
-      diverCorrection: {
+    correction: { final_species: correctedName }, // Steve logic
+    diverCorrection: {
       correctedSpecies: correctedName,
       correctedCommonName: correctedName,
       status: "draft",

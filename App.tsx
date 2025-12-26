@@ -610,7 +610,7 @@ const App: React.FC = () => {
       output: outputData,
     };
     saveBriefing(briefing);
-    setBriefings((prev) => [briefing, ...prev]);
+   setBriefings((prev) => [briefing, ...prev]);
   };
 
   const handleOpenChat = (context?: Briefing | null, message?: string | null) => {

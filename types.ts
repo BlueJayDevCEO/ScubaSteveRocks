@@ -44,6 +44,18 @@ export interface Briefing {
     | 'game_round'
     | 'calculator';
 
+  // Firestore linkage for world map
+  sightingId?: string;
+
+  // Diver correction tracking (UI + backend submission)
+  diverCorrection?: {
+    correctedSpecies: string;
+    correctedCommonName: string;
+    status: "draft" | "submitted" | "failed";
+    submittedAt: number;
+    error?: string;
+  };
+
   status: 'pending' | 'completed' | 'failed';
 
   input: {

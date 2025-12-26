@@ -28,6 +28,7 @@ import { OnboardingGuide } from "./components/OnboardingGuide";
 import { Hero } from "./components/Hero";
 import { ensureUserProfile } from "./services/userProfiles";
 import { track } from "@vercel/analytics";
+import { submitSightingCorrection } from "./services/marineSightings";
 
 // Views
 import HomeView from "./components/views/HomeView";

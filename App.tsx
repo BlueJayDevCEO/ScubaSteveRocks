@@ -27,6 +27,7 @@ import { Footer } from "./components/Footer";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { Hero } from "./components/Hero";
 import { ensureUserProfile } from "./services/userProfiles";
+import { track } from "@vercel/analytics";
 
 // Views
 import HomeView from "./components/views/HomeView";
@@ -634,10 +635,12 @@ const handleConfirmIdentification = async (briefingId: number) => {
   if (!briefing || !user) return;
 
   if (!canUserContributeToMap(user.uid)) {
-    setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
-    handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
-    return;
-  }
+  track("pin_blocked_weekly_limit", { user: user.uid });
+
+  setToastMessage("Weekly Map Upload Limit Reached. Saved to Logbook only. 🔒");
+  handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
+  return;
+}
 
   const species =
     briefing.correction?.final_species ||
@@ -667,19 +670,26 @@ const handleConfirmIdentification = async (briefingId: number) => {
     description: description,
   });
 
-  // ✅ Store the Firestore sighting ID (needed for corrections to update the same doc)
-  if (result?.success && result?.id) {
-    handleUpdateBriefingDetails(briefingId, { sightingId: result.id });
-  }
+// ✅ Store the Firestore sighting ID (needed for corrections to update the same doc)
+if (result?.success && result?.id) {
+  handleUpdateBriefingDetails(briefingId, { sightingId: result.id });
 
-  if (result?.success) {
-    incrementContributionCount(user.uid);
-    setToastMessage("Success! Sighting pinned to the World Map. 📍");
-  } else if (result?.mode === "local") {
-    setToastMessage("Guest Mode: Saved to personal Logbook only.");
-  } else {
-    setToastMessage("Upload failed. Saved to local Logbook.");
-  }
+  track("pin_to_map", {
+    user: user.uid,
+    species,
+    region,
+    sightingId: result.id,
+  });
+}
+
+if (result?.success) {
+  incrementContributionCount(user.uid);
+  setToastMessage("Success! Sighting pinned to the World Map. 📍");
+} else if (result?.mode === "local") {
+  setToastMessage("Guest Mode: Saved to personal Logbook only.");
+} else {
+  setToastMessage("Upload failed. Saved to local Logbook.");
+}
 
   handleUpdateBriefingDetails(briefingId, { contributionLogged: true });
 };

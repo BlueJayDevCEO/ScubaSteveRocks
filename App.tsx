@@ -641,7 +641,7 @@ const App: React.FC = () => {
   updateBriefing(updated);
 };
 
-const handleCorrection = (briefingId: number, correctedName: string) => {
+const handleSubmitCorrection = async (briefingId: number, correctedName: string) => {
   handleUpdateBriefingDetails(briefingId, {
     correction: { final_species: correctedName }, // Steve logic
     diverCorrection: {

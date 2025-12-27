@@ -47,7 +47,7 @@ const PartnerPricingCard: React.FC<PartnerPricingCardProps> = ({ title, price, d
                     </li>
                 ))}
             </ul>
-            <a href="mailto:scubasteve@scubasteve.rocks?subject=Scuba Steve Shop Plan Inquiry" className={`block text-center w-full font-bold text-lg py-3 rounded-lg mt-6 transition-colors ${buttonClasses}`}>
+            <a href="mailto:steve@scubasteve.rocks?subject=Scuba Steve Shop Plan Inquiry" className={`block text-center w-full font-bold text-lg py-3 rounded-lg mt-6 transition-colors ${buttonClasses}`}>
                 Contact Sales
             </a>
         </div>

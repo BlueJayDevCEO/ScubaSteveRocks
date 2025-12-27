@@ -44,7 +44,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
   const user = context?.user;
   
   // Strict Guest Check
-  const isGuest = user?.uid === 'mock-demo-user' || user?.email === 'scubasteve@scubasteve.rocks';
+  const isGuest = user?.uid === 'mock-demo-user' || user?.email === 'steve@scubasteve.rocks';
 
   useEffect(() => {
     if (files && files.length > 0) {

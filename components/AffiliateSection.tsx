@@ -63,7 +63,7 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onOpenShop, 
 
     const handleDonationClick = async (e: React.MouseEvent) => {
         e.preventDefault();
-        if (!user || user.uid === 'mock-demo-user' || user.email === 'scubasteve@scubasteve.rocks') {
+        if (!user || user.uid === 'mock-demo-user' || user.email === 'steve@scubasteve.rocks') {
             alert("Please sign in to donate securely.");
             return;
         }

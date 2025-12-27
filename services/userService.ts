@@ -153,7 +153,7 @@ export const updateUser = (updatedUser: User | null): void => {
  */
 export const canUserPerformBriefing = (userId: string, type: string = 'generic'): boolean => {
     const user = getUser(userId);
-    const isGuest = userId === 'mock-demo-user' || userId.startsWith('guest-') || user?.email === 'scubasteve@scubasteve.rocks';
+    const isGuest = userId === 'mock-demo-user' || userId.startsWith('guest-') || user?.email === 'steve@scubasteve.rocks';
 
     // 1. PRO USERS BYPASS LIMITS
     if (user?.isPro) return true;

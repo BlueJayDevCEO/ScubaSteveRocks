@@ -88,7 +88,7 @@ export const PrivacyPolicyContent: React.FC = () => (
         </LegalSection>
 
          <LegalSection title="5. Contact Us">
-            <p>If you have any questions about this Privacy Policy or wish to request data deletion, please contact us at <a href="mailto:scubasteve@scubasteve.rocks" className="text-light-accent dark:text-dark-accent hover:underline">scubasteve@scubasteve.rocks</a>.</p>
+            <p>If you have any questions about this Privacy Policy or wish to request data deletion, please contact us at <a href="mailto:steve@scubasteve.rocks" className="text-light-accent dark:text-dark-accent hover:underline">scubasteve@scubasteve.rocks</a>.</p>
         </LegalSection>
     </div>
 );

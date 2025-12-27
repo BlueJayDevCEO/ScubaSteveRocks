@@ -41,7 +41,7 @@ const mapFirebaseUserToAppUser = (fbUser: FirebaseUser): User => {
     return {
         uid: fbUser.uid,
         displayName: fbUser.displayName || (isAnonymous ? 'Ocean Explorer (Guest)' : 'Diver'),
-        email: fbUser.email || (isAnonymous ? 'scubasteve@scubasteve.rocks' : null),
+        email: fbUser.email || (isAnonymous ? 'steve@scubasteve.rocks' : null),
         photoURL: fbUser.photoURL || SCUBA_STEVE_AVATAR,
         identificationCount: 0,
         dailyUsage: {

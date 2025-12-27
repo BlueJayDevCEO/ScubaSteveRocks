@@ -35,7 +35,7 @@ export const CreditDetailsModal: React.FC<CreditDetailsModalProps> = ({ user, on
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   
-  const isGuest = user.uid === 'mock-demo-user' || user.email === 'scubasteve@scubasteve.rocks';
+  const isGuest = user.uid === 'mock-demo-user' || user.email === 'steve@scubasteve.rocks';
 
   const handleRedeem = () => {
       if (!promoCode.trim()) return;
